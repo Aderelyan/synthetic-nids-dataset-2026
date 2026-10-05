@@ -1,0 +1,15 @@
+*.pcap
+*.pcapng
+*.vdi
+*.ova
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+dataset/raw/
+capture/raw/*
+!capture/raw/.gitkeep
+dataset/processed/*
+!dataset/processed/.gitkeep
+ml/results/*
+!ml/results/.gitkeep

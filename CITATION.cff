@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: Synthetic NIDS Dataset 2026
+message: Please cite this repository when using the dataset or benchmark.
+type: dataset
+authors:
+  - name: Dataset Contributors
+year: 2026
+repository-code: https://github.com/example/synthetic-nids-dataset-2026
+license: MIT
