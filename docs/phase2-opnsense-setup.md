@@ -175,8 +175,52 @@ System → Gateways → Configuration
 ```
 Expected: `WAN_GW`, Disable Gateway Monitoring = checked, status not actively probing.
 
-## 10. Notes for the Next Phase
+## 11. NTP Server Setup (added 2026-10-03)
+
+Locked decision `blueprint-v3-updated.md` §5 point 9 required a local NTP source for the lab, since there is no internet access to reach `pool.ntp.org`. `Services → NTP → General Settings`:
+
+| Setting | Value |
+|---|---|
+| Interfaces | LAN + WAN + OPT1 + OPT2 (all four — "WAN" here is just a label for the intnet-server segment, not a real internet uplink; every internal segment needs to be able to query NTP) |
+| Advanced / raw config | `server 127.127.1.0` + `fudge 127.127.1.0 stratum 10` — forces OPNsense to serve its own system clock as a stratum-10 fallback source, since the upstream `pool.ntp.org` entries can never be reached |
+
+**Validation** (`ntpq -p` from console shell, option 8, or SSH):
+```
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+ 0.opnsense.pool .POOL.          16 p    -   64    0    0.000   +0.000   0.001
+ ...(3 more pool entries, all unreachable — expected, no internet)...
+*LOCAL(0)        .LOCL.          10 l  125  128  377    0.000   +0.000   0.001
+```
+`*LOCAL(0)` with `reach=377` (octal, full) confirms OPNsense selected its own clock as the active sync source.
+
+**Client-side (each VM, systemd-timesyncd):**
+```bash
+sudo tee /etc/systemd/timesyncd.conf > /dev/null <<'EOF'
+[Time]
+NTP=<gateway-ip>
+FallbackNTP=
+EOF
+sudo systemctl restart systemd-timesyncd
+timedatectl
+```
+
+| VM | Gateway used |
+|---|---|
+| srv-web | 10.10.10.1 |
+| srv-file | 10.10.10.1 |
+| client-1 | 10.10.20.1 |
+| client-2 | 10.10.20.1 |
+| attacker | 10.10.30.1 |
+| sensor | 192.168.56.10 |
+
+All 6 confirmed `System clock synchronized: yes` / `NTP service: active` as of 2026-10-03. `win-client` not yet applicable (Phase 4 not built yet).
+
+**Known quirk:** on attacker (Kali), `sudo` printed `unable to resolve host attacker: Temporary failure in name resolution` before each command — harmless (command still executes, just sudo trying to resolve the hostname first). Caused by `/etc/hosts` missing a `127.0.1.1 attacker` entry (unlike srv-web/srv-file, which had this added during provisioning — see `phase3-linux-servers-attacker.md`). Fixed with `echo "127.0.1.1 attacker" | sudo tee -a /etc/hosts`.
+
+## 12. Notes for the Next Phase
 
 - Full inter-segment routing (ping between srv-web ↔ client-1 ↔ attacker, etc.) cannot be validated yet — those VMs have no OS/IP configured. This is deferred to **Phase 6** (network isolation & baseline traffic validation) once all VMs are live.
 - `NatNetwork-temp` (from Phase 1) has not been attached to `router-opnsense` — the router never needs internet access, so no detach step is required for this VM specifically.
 - The WAN placeholder gateway (`10.10.10.254`) exists only to satisfy the WebGUI wizard's form validation; it does not correspond to a real device and gateway monitoring is disabled to prevent probe traffic.
+- NTP server (§11) is now live — golden snapshots (blueprint-v3 §5 point 3) can proceed now that VM clocks are consistent.

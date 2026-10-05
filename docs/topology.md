@@ -57,7 +57,7 @@ dan wajib dilepas sebelum Phase 6 (validasi isolasi).
 | srv-file | intnet-server | 10.10.10.11 | SSH, SMB/Samba, syslog |
 | client-1 | intnet-client | 10.10.20.20 | Linux Phase |
 | client-2 | intnet-client | 10.10.20.21 | Linux Phase |
-| win-client | intnet-client + hostonly | 10.10.20.50 / 192.168.56.x | Windows Phase; NIC kedua untuk RDP mgmt langsung |
+| win-client | intnet-client + hostonly | 10.10.20.50 / 192.168.56.50 | Windows Phase; NIC kedua untuk RDP mgmt langsung |
 | attacker | intnet-attacker | 10.10.30.10 | Kali — sumber semua skenario serangan |
 | sensor | hostonly + 3×intnet | .56.20 / .10.20 / .20.30 / .30.20 | Capture pasif promiscuous di 3 segmen |
 

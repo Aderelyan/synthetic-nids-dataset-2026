@@ -96,8 +96,8 @@ Set-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Visua
 | 5 service di-disable (`DiagTrack`, dst.) | ✅ tidak ada error |
 | Visual effects → performance mode | ✅ |
 
-> Catatan: `infra/windows/debloat-ltsc2024.ps1` masih placeholder — isi
-> dengan script di atas (minus baris IE yang tidak applicable) saat sempat.
+> Catatan: `infra/windows/debloat-ltsc2024.ps1` sudah diisi 2026-10-05 —
+> berisi script di atas tanpa baris IE yang tidak applicable.
 
 ## 4. Jaringan, Workgroup & Akun Lokal — Hasil Aktual
 
@@ -240,7 +240,7 @@ dipakai sebagai mgmt channel utama menggantikan console VirtualBox untuk
 sisa setup (lebih cepat, bisa paste).
 
 > `infra/windows/enable-winrm-rdp-smb.ps1` dan `infra/windows/firewall-logging.ps1`
-> masih placeholder — isi dengan blok di atas saat sempat.
+> sudah diisi 2026-10-05 dengan blok di atas.
 
 ## 7. Hasil Validasi Aktual
 

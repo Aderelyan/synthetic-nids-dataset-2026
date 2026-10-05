@@ -3,7 +3,7 @@ title: Synthetic NIDS Dataset 2026
 message: Please cite this repository when using the dataset or benchmark.
 type: dataset
 authors:
-  - name: Dataset Contributors
+  - name: Reno Dwi Aderelyan
 year: 2026
-repository-code: https://github.com/example/synthetic-nids-dataset-2026
+repository-code: https://github.com/Aderelyan/synthetic-nids-dataset-2026
 license: MIT

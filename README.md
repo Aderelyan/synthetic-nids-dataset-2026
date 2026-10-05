@@ -8,11 +8,11 @@ dataset across Linux and Windows client phases.
 - `docs/`: topology, blueprint, threat references, and scenario template.
 - `infra/`: virtual lab provisioning and Windows configuration.
 - `scenarios/`: twelve self-contained traffic-generation scenarios.
-- `capture/`: capture filters and local raw PCAP storage.
-- `pipeline/`: Zeek/Tranalyzer processing, merging, and labeling.
+- `capture/`: local raw PCAP storage (the old per-phase filter note is superseded; the sensor does full capture, see `docs/phase5-sensor.md` section 7).
+- `pipeline/`: Zeek/Argus offline extraction from saved PCAPs, merging, and labeling.
 - `dataset/`: processed data and schema documentation.
 - `ml/`: baseline training script, notebook, and result outputs.
-- `validation/`: Windows-phase execution checklist.
+- `validation/`: execution checklist (written for the Windows phase; a Linux-phase equivalent is still to be added before Phase 6).
 
 ## Safety
 

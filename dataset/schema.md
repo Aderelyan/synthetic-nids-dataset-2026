@@ -1,7 +1,12 @@
 # Dataset Schema
 
-`all_flows.csv` contains flow-level records produced by the Zeek/Tranalyzer
+`all_flows.csv` contains flow-level records produced by the Zeek/Argus
 merge and scenario-window labeling steps.
+
+> This table is the initial minimal schema. The target is the 49-column
+> UNSW-NB15 layout; the column-to-source mapping (Argus native, Zeek, and the
+> `ct_*` columns deferred to Phase 7/8) is in `docs/phase5-sensor.md` section 7.3.
+> Update this file when the merge step is implemented.
 
 | Column | Description | UNSW-NB15 relation |
 | --- | --- | --- |
