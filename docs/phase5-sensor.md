@@ -1,6 +1,6 @@
-# Phase 5 — Sensor Provisioning (pcap-first capture: tcpdump capture + Zeek/Argus offline extraction + Suricata live IDS; Tranalyzer2 deferred)
+# Phase 5 — Sensor Provisioning (pcap-first capture: tcpdump capture + Zeek/Argus offline extraction + Suricata live IDS; Tranalyzer2 replaced by Argus)
 
-Documentation of the sensor VM build: Debian 13.7.0 netinst installation as a headless, 4-NIC passive capture node, the ICH9 chipset requirement for a 5th temporary install NIC, static IP configuration across all 4 final segments, and capture-tooling installation (tcpdump/Zeek/Suricata/Argus; Tranalyzer2 deferred, see §7.4). Host: Windows, VirtualBox 7.2.12.
+Documentation of the sensor VM build: Debian 13.7.0 netinst installation as a headless, 4-NIC passive capture node, the ICH9 chipset requirement for a 5th temporary install NIC, static IP configuration across all 4 final segments, and capture-tooling installation (tcpdump/Zeek/Suricata/Argus; Tranalyzer2 replaced by Argus, see §7.3). Host: Windows, VirtualBox 7.2.12.
 
 ## 1. VM Resource & Storage Provisioning
 

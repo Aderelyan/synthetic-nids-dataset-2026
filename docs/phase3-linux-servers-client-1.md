@@ -107,3 +107,11 @@ No additional firewall rule needed — OPT1 (intnet-client) already has the "pas
 - Expect `enp0s8` to still require manual `ip link set up` even with the SSH-server task checked — the two issues are independent (`isc-dhcp-client` absence vs. `openssh-server` absence).
 - Use the jump-host pattern (§5) as the default SSH access method; skip setting up a NAT port-forward rule unless jump-host access fails.
 - Target: Debian 13.7.0, 2 vCPU, 2 GB RAM, 15 GB disk, IP `10.10.20.21`, hostname `client2`.
+
+## 9. Post-Provisioning Status (added 2026-10-05)
+
+| Item | Status |
+|---|---|
+| Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.20.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
+| Golden snapshot | Taken 2026-10-05, UUID `eccfc35f-ef74-47cc-a504-fe037b2aef03` — see `blueprint-v3-updated.md` §5 point 3 |
+| Temporary NAT NIC (`NatNetwork-temp`) | Not yet confirmed detached — must be verified before Phase 6; if it was still attached when the snapshot was taken, detach it and retake the snapshot |

@@ -1,6 +1,6 @@
-# Blueprint v3 — Update Based on Actual Implementation (Phase 1–5 Partial)
+# Blueprint v3 — Update Based on Actual Implementation (Phases 1–4 Done, Phase 5 Partial)
 
-> Derived from `blueprint-v2-windows-client.md`. Documents deviations between the v2 plan and field implementation (Phase 1: Network Setup ✅, Phase 2: OPNsense ✅, Phase 3: srv-web ✅ srv-file ✅ client-1✅ client-2✅ attacker✅ — done, Phase 5: sensor partial — network ✅, pcap-first capture in progress, Tranalyzer2 replaced by Argus [locked 2026-10-02]), plus decisions that lock down parameters left ambiguous in v2.
+> Derived from `blueprint-v2-windows-client.md`. Documents deviations between the v2 plan and field implementation (Phase 1: Network Setup ✅, Phase 2: OPNsense ✅, Phase 3: srv-web ✅ srv-file ✅ client-1✅ client-2✅ attacker✅ — done, Phase 4: win-client ✅ [2026-10-05], Phase 5: sensor partial — network ✅, pcap-first capture in progress, Tranalyzer2 replaced by Argus [locked 2026-10-02]), plus decisions that lock down parameters left ambiguous in v2.
 
 ---
 

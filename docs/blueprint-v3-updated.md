@@ -1,6 +1,6 @@
-# Blueprint v3 — Update Berdasarkan Implementasi Aktual (Fase 1–5 Parsial)
+# Blueprint v3 — Update Berdasarkan Implementasi Aktual (Fase 1–4 Selesai, Fase 5 Parsial)
 
-> Turunan dari `blueprint-v2-windows-client.md`. Mendokumentasikan deviasi antara rencana v2 dan realisasi lapangan (Fase 1: Network Setup ✅, Fase 2: OPNsense ✅, Fase 3: srv-web ✅ srv-file ✅ client-1✅ client-2✅ attacker✅ — selesai, Fase 5: sensor parsial — jaringan ✅, capture pcap-first in progress, Tranalyzer2 digantikan Argus [locked 2026-10-02]), plus keputusan yang mengunci parameter yang sebelumnya ambigu di v2.
+> Turunan dari `blueprint-v2-windows-client.md`. Mendokumentasikan deviasi antara rencana v2 dan realisasi lapangan (Fase 1: Network Setup ✅, Fase 2: OPNsense ✅, Fase 3: srv-web ✅ srv-file ✅ client-1✅ client-2✅ attacker✅ — selesai, Fase 4: win-client ✅ [2026-10-05], Fase 5: sensor parsial — jaringan ✅, capture pcap-first in progress, Tranalyzer2 digantikan Argus [locked 2026-10-02]), plus keputusan yang mengunci parameter yang sebelumnya ambigu di v2.
 
 ---
 

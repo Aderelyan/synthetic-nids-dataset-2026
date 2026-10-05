@@ -101,3 +101,11 @@ No NAT port-forward rule created for client-2 — the jump-host pattern is now t
 - **Do not assume installer checkbox/mirror choices persisted** — always verify `/etc/apt/sources.list` and `systemctl status ssh` immediately after first login, independently of what was selected during install.
 - Jump-host SSH access (§5) is now validated twice in a row — continue using it as the default; skip NAT port-forward setup unless jump-host access fails.
 - With client-1 and client-2 done, Phase 3 Linux servers+clients is complete except for `attacker` (Kali). Sensor and win-client remain in later phases (5 and 4).
+
+## 9. Post-Provisioning Status (added 2026-10-05)
+
+| Item | Status |
+|---|---|
+| Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.20.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
+| Golden snapshot | Taken 2026-10-05, UUID `cd94384c-302a-44eb-89c8-e70785179c62` — see `blueprint-v3-updated.md` §5 point 3 |
+| Temporary NAT NIC (`NatNetwork-temp`) | Not yet confirmed detached — must be verified before Phase 6; if it was still attached when the snapshot was taken, detach it and retake the snapshot |

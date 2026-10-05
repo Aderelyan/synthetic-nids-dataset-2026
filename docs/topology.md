@@ -53,7 +53,7 @@ dan wajib dilepas sebelum Phase 6 (validasi isolasi).
 | VM | Segmen | IP | Peran |
 |---|---|---|---|
 | router-opnsense | hostonly / server / client / attacker | .56.10 / .10.1 / .20.1 / .30.1 | Gateway + firewall tiap segmen |
-| srv-web | intnet-server | 10.10.10.10 | nginx, DVWA/Juice Shop (target S-04) |
+| srv-web | intnet-server | 10.10.10.10 | DVWA via Docker (target S-04); nginx dinonaktifkan, Juice Shop tidak dipasang |
 | srv-file | intnet-server | 10.10.10.11 | SSH, SMB/Samba, syslog |
 | client-1 | intnet-client | 10.10.20.20 | Linux Phase |
 | client-2 | intnet-client | 10.10.20.21 | Linux Phase |

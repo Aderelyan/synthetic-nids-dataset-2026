@@ -232,3 +232,11 @@ curl -I http://localhost                                          # 302 Found �
 - The VT-x/Hyper-V fix (§2) is host-wide and does not need repeating.
 - The dual-gateway routing pattern (§4) and the NAT port-forwarding requirement (§6–7) will very likely recur for srv-file, client-1, client-2, and attacker — apply the same fixes proactively (no default route on the intnet NIC; add port-forward rules for SSH before installing, rather than discovering the issue again).
 - `NatNetwork-temp` NICs and all associated port-forward rules must be removed from every VM before Phase 6 (air-gap validation).
+
+## 10. Post-Provisioning Status (added 2026-10-05)
+
+| Item | Status |
+|---|---|
+| Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.10.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
+| Golden snapshot | Taken 2026-10-05, UUID `b4517161-08af-4c4e-b436-5eba16f13676` — see `blueprint-v3-updated.md` §5 point 3 |
+| Temporary NAT NIC (`NatNetwork-temp`) | Not yet confirmed detached — must be verified before Phase 6; if it was still attached when the snapshot was taken, detach it and retake the snapshot |

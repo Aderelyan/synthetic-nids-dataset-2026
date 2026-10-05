@@ -128,7 +128,7 @@ SSH is reachable from LAN (192.168.56.0/24) via the anti-lockout rule; it remain
 
 | Host | Domain | IP Address | Description |
 |---|---|---|---|
-| web01 | lab.local | 10.10.10.10 | srv-web (nginx, DVWA/Juice Shop) |
+| web01 | lab.local | 10.10.10.10 | srv-web (DVWA in Docker; nginx disabled, Juice Shop not installed) |
 | files01 | lab.local | 10.10.10.11 | srv-file (SSH, SMB, Samba, Syslog) |
 | client1 | lab.local | 10.10.20.20 | Linux client 1 |
 | client2 | lab.local | 10.10.20.21 | Linux client 2 |
@@ -214,7 +214,7 @@ timedatectl
 | attacker | 10.10.30.1 |
 | sensor | 192.168.56.10 |
 
-All 6 confirmed `System clock synchronized: yes` / `NTP service: active` as of 2026-10-03. `win-client` not yet applicable (Phase 4 not built yet).
+All 6 confirmed `System clock synchronized: yes` / `NTP service: active` as of 2026-10-03. `win-client` (gateway `10.10.20.1`) was added on 2026-10-05 using Windows `W32Time` instead of systemd-timesyncd — see `phase4-windows-client.md` §5.
 
 **Known quirk:** on attacker (Kali), `sudo` printed `unable to resolve host attacker: Temporary failure in name resolution` before each command — harmless (command still executes, just sudo trying to resolve the hostname first). Caused by `/etc/hosts` missing a `127.0.1.1 attacker` entry (unlike srv-web/srv-file, which had this added during provisioning — see `phase3-linux-servers-attacker.md`). Fixed with `echo "127.0.1.1 attacker" | sudo tee -a /etc/hosts`.
 

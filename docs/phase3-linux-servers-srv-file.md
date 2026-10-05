@@ -182,3 +182,11 @@ Confirmed: `sshd` log showed `Accepted password for ... at 09:23:00 UTC`.
 - If client-1/client-2 also use Debian minimal netinst, expect the same three-part chain (§6) by default: no `openssh-server`, `cdrom:`-only apt sources (if network mirror is declined), no `sudo`. Installing the SSH server task and accepting the network mirror during install would avoid all three proactively.
 - The NAT port-forward "rule already exists" error (§5) will recur for any VM where a port-forward rule is added, corrected, and re-added under the same name — always `delete` before re-adding rather than attempting to modify in place.
 - `NatNetwork-temp` NICs and all associated port-forward rules must still be removed from every VM before Phase 6 (air-gap validation), per the note carried over from `phase3-linux-servers-srv-web.md` §9.
+
+## 10. Post-Provisioning Status (added 2026-10-05)
+
+| Item | Status |
+|---|---|
+| Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.10.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
+| Golden snapshot | Taken 2026-10-05, UUID `b0d395de-769b-482e-bb07-20766ad3bad0` — see `blueprint-v3-updated.md` §5 point 3 |
+| Temporary NAT NIC (`NatNetwork-temp`) | Not yet confirmed detached — must be verified before Phase 6; if it was still attached when the snapshot was taken, detach it and retake the snapshot |
