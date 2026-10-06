@@ -154,7 +154,18 @@ w32tm /resync /force
 w32tm /query /status
 ```
 
-**Known issue — "large phase offset" membuat `/resync` gagal silent:**
+> **[RIWAYAT — gejala bug router, JANGAN DIULANG] (ditandai 2026-10-06)**
+> Offset +25197 detik dan langkah `Set-Date` di bawah ini adalah catatan
+> kejadian 2026-10-05, bukan prosedur. Offset ~7 jam itu bukan sifat lab,
+> melainkan akibat bug VirtualBox: VM `router-opnsense` memakai
+> `rtcuseutc=off`, sehingga jam WIB host dibaca OPNsense sebagai UTC (jam
+> router maju 7 jam). Dibetulkan 2026-10-06 dengan
+> `VBoxManage modifyvm "router-opnsense" --rtcuseutc on` — lihat
+> `phase2-opnsense-setup.md` §11. Jam lab sekarang = UTC asli, jadi offset
+> sebesar ini tidak akan muncul lagi dan `Set-Date` manual tidak diperlukan.
+> Kalau offset besar muncul lagi, periksa `rtcuseutc` router dulu.
+
+**Riwayat (2026-10-05) — "large phase offset" membuat `/resync` gagal silent:**
 Clock VM baru (`win-client`) berselisih besar dari clock OPNsense
 (`10.10.20.1`) — offset terukur **+25197.7 detik (~7 jam)**, konsisten di
 setiap pengukuran `w32tm /stripchart`. `W32Time` Windows menolak melakukan
@@ -164,7 +175,7 @@ tanpa pesan error yang jelas — `/resync` terus melaporkan "no time data
 available" walau `Source`/`Last Successful Sync Time` di `/query /status`
 menunjukkan komunikasi ke server sebenarnya berhasil).
 
-**Fix:** set manual jam lokal mendekati target (pakai offset hasil
+**Fix saat itu (riwayat, jangan diulang):** set manual jam lokal mendekati target (pakai offset hasil
 `stripchart`), baru `/resync` — ini membawa selisih ke bawah threshold
 spike-watch sehingga sync berjalan normal:
 
@@ -175,7 +186,7 @@ w32tm /resync /force
 w32tm /query /status
 ```
 
-**Hasil akhir:**
+**Hasil akhir (2026-10-05):**
 ```
 Leap Indicator: 0(no warning)
 Stratum: 12 (secondary reference - syncd by (S)NTP)
@@ -184,15 +195,9 @@ ReferenceId: 0x0A0A1401 (source IP: 10.10.20.1)
 Source: 10.10.20.1
 ```
 
-> **Penting — nilai absolut waktu `win-client` TIDAK match real-world time
-> (WIB).** Ini **by design**: OPNsense jalan sebagai local-clock fallback
-> (stratum 10, tidak pernah sync ke internet — lihat `phase2-opnsense-setup.md`
-> §11), jadi nilai absolutnya arbitrer (ditentukan jam VM OPNsense sendiri
-> saat boot). Yang penting untuk integritas dataset adalah **konsistensi
-> relatif antar-VM** (semua VM sync ke sumber yang sama), bukan kecocokan ke
-> waktu dunia nyata. Jangan "perbaiki" ini lagi di VM manapun dengan
-> menyamakan ke jam host/real-world — itu justru akan membuat VM tersebut
-> **tidak sinkron** dengan 7 VM lain di lab.
+> **Status jam per 2026-10-06:** jam `win-client` = UTC asli, sama dengan 7 VM
+> lain. Jam 8 VM dicek ulang 2026-10-06 dan semuanya cocok dengan UTC host
+> (selisih hanya hitungan detik). Sumber waktu tetap OPNsense (`10.10.20.1`).
 
 ## 6. Layanan untuk Skenario Serangan (SMB, WinRM, RDP, Firewall Logging) — Hasil Aktual
 

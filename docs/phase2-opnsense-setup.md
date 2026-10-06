@@ -218,6 +218,18 @@ All 6 confirmed `System clock synchronized: yes` / `NTP service: active` as of 2
 
 **Known quirk:** on attacker (Kali), `sudo` printed `unable to resolve host attacker: Temporary failure in name resolution` before each command — harmless (command still executes, just sudo trying to resolve the hostname first). Caused by `/etc/hosts` missing a `127.0.1.1 attacker` entry (unlike srv-web/srv-file, which had this added during provisioning — see `phase3-linux-servers-attacker.md`). Fixed with `echo "127.0.1.1 attacker" | sudo tee -a /etc/hosts`.
 
+**Known issue — the router VM must use `--rtcuseutc on` (found and fixed 2026-10-06):**
+
+| Item | Detail |
+|---|---|
+| Symptom | Lab time ran ~7 hours ahead of real UTC. Every VM agreed with each other (all sync to OPNsense), so the error was invisible inside the lab. It showed up as the +25197 s offset `W32Time` refused on `win-client` (`phase4-windows-client.md` §5), and as a +7h clock jump after restoring the old router snapshot. |
+| Cause | `router-opnsense` was running with `rtcuseutc=off`. With that setting VirtualBox gives the guest a hardware clock set to the host's **local** time (WIB, UTC+7). OPNsense/FreeBSD assumes the hardware clock is UTC, so it read 7 hours ahead. Because §11 makes OPNsense serve its own system clock (`LOCAL(0)`, stratum 10) with no upstream to correct it, that wrong time was handed to every NTP client. |
+| Fix | With the VM powered off: `VBoxManage modifyvm "router-opnsense" --rtcuseutc on` |
+| Check | `VBoxManage showvminfo "router-opnsense" --machinereadable \| findstr /I rtcuseutc` → `rtcuseutc="on"`; then `date -u` on the router must match the host's UTC. |
+| Result | Lab time now = real UTC. All 8 VM clocks re-checked 2026-10-06 and match host UTC (seconds apart). The router golden snapshot was re-taken with the setting on (`blueprint-v3-updated.md` §5 point 3). |
+
+This setting is **mandatory** for the router VM: it is the only time source in the lab, so a wrong hardware-clock assumption here shifts every pcap timestamp and every label window. If the router VM is ever rebuilt or re-imported, set `--rtcuseutc on` before first boot. The earlier explanation that the lab clock was arbitrary "by design" was wrong.
+
 ## 12. Notes for the Next Phase
 
 - Full inter-segment routing (ping between srv-web ↔ client-1 ↔ attacker, etc.) cannot be validated yet — those VMs have no OS/IP configured. This is deferred to **Phase 6** (network isolation & baseline traffic validation) once all VMs are live.
