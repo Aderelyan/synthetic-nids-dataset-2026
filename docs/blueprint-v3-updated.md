@@ -69,17 +69,17 @@ Diagram ASCII v2 §4.1 sudah **akurat secara struktural** (segmentasi 4-NIC OPNs
 
 1. **Checklist validasi Fase 6 di v2 §4.5 hanya mencakup Windows phase.** Buat versi paralel untuk Linux phase (isolasi client-1/2/attacker↔internet, resolusi DNS `*.lab.local`, sinkronisasi waktu UTC) sebelum eksekusi skenario S-01/02/03/04/08/09/11/12 — tanpa ini, klaim "isolated lab" pada dataset tidak dapat diverifikasi utk separuh skenario.
 2. **[KEPUTUSAN TERKUNCI — 2026-10-01] Generate traffic normal/benign secara eksplisit sebagai skenario tersendiri**, bukan hanya "sisa" dari idle time. UNSW-NB15 asli punya profil normal traffic terstruktur (browsing, DNS query wajar, file transfer legit). Tanpa ini, base rate class `normal` di dataset akan terlalu sintetik/tipis — rawan classifier overfit ke pola "diam = normal". Implementasi: script terjadwal (cron) di client-1/client-2/win-client — browsing/`curl` ke srv-web (halaman legit, bukan exploit), query DNS random ke `*.lab.local`, transfer file kecil legit ke srv-file — jalan beberapa jam per sesi, bukan cuma menit.
-3. **[KEPUTUSAN TERKUNCI — 2026-10-01] Snapshot "golden" (v2 §1.4, dipakai utk win-client) diterapkan ke semua 8 VM**, bukan cuma win-client — reproducibility check v2 §4.5 ("hash pcap run1 = run2") jadi syarat tiap skenario, bukan eksklusif Windows phase. `VBoxManage snapshot "<vm>" take "golden"` setelah tiap VM mencapai state tervalidasi (network+tooling beres, pre-first-attack), restore sebelum tiap run skenario. **Status: SELESAI 2026-10-05 — 8/8 VM sudah punya golden snapshot**, dikonfirmasi `VBoxManage snapshot "<vm>" list` untuk semua VM:
+3. **[KEPUTUSAN TERKUNCI — 2026-10-01] Snapshot "golden" (v2 §1.4, dipakai utk win-client) diterapkan ke semua 8 VM**, bukan cuma win-client — reproducibility check v2 §4.5 ("hash pcap run1 = run2") jadi syarat tiap skenario, bukan eksklusif Windows phase. `VBoxManage snapshot "<vm>" take "golden"` setelah tiap VM mencapai state tervalidasi (network+tooling beres, pre-first-attack), restore sebelum tiap run skenario. **Status: SELESAI — 8/8 VM punya golden snapshot.** Snapshot 6 VM (router-opnsense, srv-web, srv-file, client-1, client-2, sensor) **diambil ulang 2026-10-06** setelah dua perbaikan: (a) NIC `NatNetwork-temp` yang masih menempel dilepas dari srv-web/srv-file/client-1/client-2 (nic2) dan sensor (nic5) — isolasi sebelumnya bocor; (b) `rtcuseutc on` di router (snapshot lama menyimpan `off` → jam maju 7 jam saat restore). attacker & win-client tidak berubah (NIC NAT sudah bersih, jam sudah benar). UUID terbaru:
 
 | VM | Snapshot UUID |
 |---|---|
-| router-opnsense | `f722c015-d85c-4c4e-b46f-06411703fe8d` |
-| srv-web | `b4517161-08af-4c4e-b436-5eba16f13676` |
-| srv-file | `b0d395de-769b-482e-bb07-20766ad3bad0` |
-| client-1 | `eccfc35f-ef74-47cc-a504-fe037b2aef03` |
-| client-2 | `cd94384c-302a-44eb-89c8-e70785179c62` |
+| router-opnsense | `aff872ec-1a0b-4aab-8b78-fa5c7efd74e4` |
+| srv-web | `ae630ccc-3c9d-4d59-bb13-7fe6f9c8f07b` |
+| srv-file | `b98af237-4a1a-436c-a763-f9681799a371` |
+| client-1 | `d3cca5ba-f29d-4edb-9d02-d52a5785e958` |
+| client-2 | `fbdd9e8a-b22c-4cb5-8a34-3a958e879da6` |
 | attacker | `423dc313-f5fe-4b10-9f24-42af1ed43fdb` |
-| sensor | `edda808a-468b-4dbc-8600-87029257563d` |
+| sensor | `2aade3df-a88e-46d6-96a6-c68b1de619d8` |
 | win-client | `6a291dd9-aa9b-4737-bfcd-5c2ffb7d7935` |
 
 Blocker reproducibility v2 §4.5 (hash pcap run1 = run2) kini bisa mulai dibangun di atas baseline yang konsisten untuk seluruh 8 VM.

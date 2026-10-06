@@ -69,17 +69,17 @@ The v2 §4.1 ASCII diagram is **structurally accurate** (4-NIC OPNsense segmenta
 
 1. **The Phase 6 validation checklist in v2 §4.5 only covers the Windows phase.** Build a parallel version for the Linux phase (client-1/2/attacker↔internet isolation, `*.lab.local` DNS resolution, UTC time sync) before executing scenarios S-01/02/03/04/08/09/11/12 — without it, the "isolated lab" claim cannot be verified for half the scenarios.
 2. **[LOCKED DECISION — 2026-10-01] Explicitly generate normal/benign traffic as its own scenario**, not just idle-time "leftovers." The original UNSW-NB15 has a structured normal-traffic profile (browsing, ordinary DNS queries, legitimate file transfer). Without this, the `normal` class base rate in the dataset will be too synthetic/thin — the classifier risks overfitting to "silence = normal." Implementation: scheduled scripts (cron) on client-1/client-2/win-client — browsing/`curl` against srv-web (legitimate pages, not exploits), random DNS queries against `*.lab.local`, small legitimate file transfers to srv-file — run for hours per session, not just minutes.
-3. **[LOCKED DECISION — 2026-10-01] "Golden" snapshots (v2 §1.4, used for win-client) applied to all 8 VMs**, not just win-client — the reproducibility check in v2 §4.5 ("pcap hash run1 = run2") is now a requirement for every scenario, not exclusive to the Windows phase. `VBoxManage snapshot "<vm>" take "golden"` once each VM reaches a validated state (network+tooling done, pre-first-attack), restored before every scenario run. **Status: DONE 2026-10-05 — 8/8 VMs now have a golden snapshot**, confirmed via `VBoxManage snapshot "<vm>" list` for every VM:
+3. **[LOCKED DECISION — 2026-10-01] "Golden" snapshots (v2 §1.4, used for win-client) applied to all 8 VMs**, not just win-client — the reproducibility check in v2 §4.5 ("pcap hash run1 = run2") is now a requirement for every scenario, not exclusive to the Windows phase. `VBoxManage snapshot "<vm>" take "golden"` once each VM reaches a validated state (network+tooling done, pre-first-attack), restored before every scenario run. **Status: DONE — 8/8 VMs have a golden snapshot.** Six VMs (router-opnsense, srv-web, srv-file, client-1, client-2, sensor) were **re-taken 2026-10-06** after two fixes: (a) the leftover `NatNetwork-temp` NIC was detached from srv-web/srv-file/client-1/client-2 (nic2) and sensor (nic5) — isolation had been leaking; (b) `rtcuseutc on` on the router (the old snapshot stored `off` → +7h clock on restore). attacker & win-client unchanged (NAT NIC already clean, clock already correct). Latest UUIDs:
 
 | VM | Snapshot UUID |
 |---|---|
-| router-opnsense | `f722c015-d85c-4c4e-b46f-06411703fe8d` |
-| srv-web | `b4517161-08af-4c4e-b436-5eba16f13676` |
-| srv-file | `b0d395de-769b-482e-bb07-20766ad3bad0` |
-| client-1 | `eccfc35f-ef74-47cc-a504-fe037b2aef03` |
-| client-2 | `cd94384c-302a-44eb-89c8-e70785179c62` |
+| router-opnsense | `aff872ec-1a0b-4aab-8b78-fa5c7efd74e4` |
+| srv-web | `ae630ccc-3c9d-4d59-bb13-7fe6f9c8f07b` |
+| srv-file | `b98af237-4a1a-436c-a763-f9681799a371` |
+| client-1 | `d3cca5ba-f29d-4edb-9d02-d52a5785e958` |
+| client-2 | `fbdd9e8a-b22c-4cb5-8a34-3a958e879da6` |
 | attacker | `423dc313-f5fe-4b10-9f24-42af1ed43fdb` |
-| sensor | `edda808a-468b-4dbc-8600-87029257563d` |
+| sensor | `2aade3df-a88e-46d6-96a6-c68b1de619d8` |
 | win-client | `6a291dd9-aa9b-4737-bfcd-5c2ffb7d7935` |
 
 The v2 §4.5 reproducibility requirement (pcap hash run1 = run2) can now be built on a consistent baseline across all 8 VMs.

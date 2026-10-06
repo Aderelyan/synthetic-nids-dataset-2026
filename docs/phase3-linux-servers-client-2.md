@@ -107,5 +107,5 @@ No NAT port-forward rule created for client-2 — the jump-host pattern is now t
 | Item | Status |
 |---|---|
 | Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.20.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
-| Golden snapshot | Taken 2026-10-05, UUID `cd94384c-302a-44eb-89c8-e70785179c62` — see `blueprint-v3-updated.md` §5 point 3 |
-| Temporary NAT NIC (`NatNetwork-temp`) | Not yet confirmed detached — must be verified before Phase 6; if it was still attached when the snapshot was taken, detach it and retake the snapshot |
+| Golden snapshot | Re-taken 2026-10-06 (offline, after NAT NIC detached), UUID `fbdd9e8a-b22c-4cb5-8a34-3a958e879da6` — see `blueprint-v3-updated.md` §5 point 3 |
+| Temporary NAT NIC (`NatNetwork-temp`) | **Dilepas 2026-10-06** (`VBoxManage modifyvm "<vm>" --nic2 none`). Dikonfirmasi lewat sapuan `showvminfo ... natnet` kosong untuk semua 8 VM. Golden snapshot di atas sudah diambil setelah pelepasan ini. |

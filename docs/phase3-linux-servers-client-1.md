@@ -113,5 +113,5 @@ No additional firewall rule needed — OPT1 (intnet-client) already has the "pas
 | Item | Status |
 |---|---|
 | Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.20.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
-| Golden snapshot | Taken 2026-10-05, UUID `eccfc35f-ef74-47cc-a504-fe037b2aef03` — see `blueprint-v3-updated.md` §5 point 3 |
-| Temporary NAT NIC (`NatNetwork-temp`) | Not yet confirmed detached — must be verified before Phase 6; if it was still attached when the snapshot was taken, detach it and retake the snapshot |
+| Golden snapshot | Re-taken 2026-10-06 (offline, after NAT NIC detached), UUID `d3cca5ba-f29d-4edb-9d02-d52a5785e958` — see `blueprint-v3-updated.md` §5 point 3 |
+| Temporary NAT NIC (`NatNetwork-temp`) | **Dilepas 2026-10-06** (`VBoxManage modifyvm "<vm>" --nic2 none`). Dikonfirmasi lewat sapuan `showvminfo ... natnet` kosong untuk semua 8 VM. Golden snapshot di atas sudah diambil setelah pelepasan ini. |
