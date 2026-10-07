@@ -1,0 +1,11 @@
+# output hasil run skenario — jangan di-commit (bisa berisi hash/kredensial/bukti)
+*.nmap
+*.hydra
+*.nxc
+*.out
+s07-secretsdump.txt
+s07-pth.nxc
+s12-recv-nc.bin
+sqlmap-out/
+# marker log ada di home attacker, bukan di repo
+attack-markers.csv
