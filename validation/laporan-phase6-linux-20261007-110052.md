@@ -1,0 +1,70 @@
+# Laporan Phase 6 (Linux phase) — Isolasi + Baseline Sensor
+
+Dibuat (UTC): 2026-10-07 11:00:52Z
+
+## 1. Sapuan isolasi NIC (host)
+  PASS: router-opnsense: hanya intnet/hostonly/none
+  PASS: srv-web: hanya intnet/hostonly/none
+  PASS: srv-file: hanya intnet/hostonly/none
+  PASS: client-1: hanya intnet/hostonly/none
+  PASS: client-2: hanya intnet/hostonly/none
+  PASS: win-client: hanya intnet/hostonly/none
+  PASS: attacker: hanya intnet/hostonly/none
+  PASS: sensor: hanya intnet/hostonly/none
+
+## 2. Nyalakan Linux phase + sensor, matikan win-client
+    menunggu boot 60s...
+  PASS: win-client mati (phase switching benar)
+    menunggu attacker siap SSH...
+    attacker siap.
+
+## 3. journald permanen di srv-file
+    [sudo] password for labadmin: /usr/lib/tmpfiles.d/vsftpd.conf:1: Line references path below legacy directory /var/run/, updating /var/run/vsftpd/empty → /run/vsftpd/empty; please update the tmpfiles.d/ drop-in file accordingly.
+    Archived and active journals take up 32M in the file system.
+  PASS: journald persisten aktif
+
+## 4. Sensor capture aktif + ukuran pcap awal
+    is-active: active active active 
+  PASS: 3 instance tcpdump active
+    pre enp0s8: 35519 byte
+    pre enp0s9: 2512 byte
+    pre enp0s10: 14621 byte
+
+## 5. Trafik uji dari attacker + uji isolasi
+    ping 10.10.10.10 OK
+    ping 10.10.10.11 OK
+    ping 10.10.20.20 OK
+    ping 10.10.20.21 OK
+    web_http=302
+    ISO-PING:
+    2 packets transmitted, 0 received, 100% packet loss, time 1102ms
+    
+    ISO-DNSPUB:
+    ** server can't find google.com: SERVFAIL
+    
+    ISO-DNSLAB:
+    Address: 10.10.10.10
+  PASS: trafik segmen server tergenerate
+  PASS: trafik segmen client tergenerate
+  PASS: ISOLASI: internet (8.8.8.8) TIDAK terjangkau
+  (catatan: cek baris ISO-DNSLAB di atas — web01.lab.local harus resolve ke 10.10.10.10)
+
+## 6. Sensor menangkap 3 segmen (ukuran pcap bertambah)
+    post enp0s8: 39285 byte (pre 35519)
+  PASS: enp0s8: pcap bertambah -> menangkap trafik
+    post enp0s9: 5572 byte (pre 2512)
+  PASS: enp0s9: pcap bertambah -> menangkap trafik
+    post enp0s10: 35422 byte (pre 14621)
+  PASS: enp0s10: pcap bertambah -> menangkap trafik
+
+## RINGKASAN
+Total error: 0 / 6
+SEMUA PASS — isolasi & baseline sensor (Linux phase) VALID.
+
+## Lanjutan MANUAL (opsional, butuh sudo di sensor) — bukti flow terekstrak:
+  ssh sensor@192.168.56.20
+  sudo -s
+  P=$(ls -t /var/log/pcap/enp0s8/*.pcap | head -1)
+  mkdir -p /tmp/zk && cd /tmp/zk && /opt/zeek/bin/zeek -r "$P" local && head -5 conn.log
+  argus -r "$P" -w /tmp/t.argus -P 0 && ra -M nomar -r /tmp/t.argus -c , -s stime,proto,saddr,daddr,state | head -5
+  tail -3 /var/log/suricata/eve.json
