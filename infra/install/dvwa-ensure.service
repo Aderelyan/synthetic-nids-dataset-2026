@@ -1,0 +1,13 @@
+[Unit]
+Description=Ensure DVWA container serves on :80 after boot
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/dvwa-ensure.sh
+
+[Install]
+WantedBy=multi-user.target

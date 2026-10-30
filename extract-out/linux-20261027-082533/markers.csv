@@ -1,0 +1,8 @@
+scenario,attack_cat,phase,target,start_utc,end_utc
+S03,Brute Force,linux-or-windows,loop-54x,2026-10-27T04:18:17Z,2026-10-27T05:18:17Z
+S09,Backdoor,linux,loop-61x,2026-10-27T05:23:54Z,2026-10-27T06:11:24Z
+S10,Backdoor,any,loop-29x,2026-10-27T06:17:23Z,2026-10-27T06:22:26Z
+S11,DoS,any,loop-43x,2026-10-27T06:27:28Z,2026-10-27T07:14:10Z
+S12,Analysis,linux,loop-179x,2026-10-27T07:19:57Z,2026-10-27T08:20:00Z
+N01,Normal,any,benign,2026-10-27T03:12:43Z,2026-10-27T04:12:44Z
+N01,Normal,any,benign,2026-10-27T03:12:44Z,2026-10-27T04:13:12Z

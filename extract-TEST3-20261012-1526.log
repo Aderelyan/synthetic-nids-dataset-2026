@@ -1,0 +1,52 @@
+== kumpulkan marker ==
+-- markers gabungan --
+scenario,attack_cat,phase,target,start_utc,end_utc
+S01; ATTACK_CAT=Reconnaissance; PHASE=any,,,loop-2x,2026-10-12T08:10:16Z,2026-10-12T08:12:16Z
+S02; ATTACK_CAT=Brute Force; PHASE=any,,,loop-10x,2026-10-12T08:11:33Z,2026-10-12T08:13:33Z
+S03; ATTACK_CAT=Brute Force; PHASE=linux-or-windows,,,loop-4x,2026-10-12T08:12:49Z,2026-10-12T08:14:49Z
+S04; ATTACK_CAT=Exploits; PHASE=any,,,loop-12x,2026-10-12T08:14:06Z,2026-10-12T08:16:08Z
+S08; ATTACK_CAT=Backdoor; PHASE=linux,,,loop-20x,2026-10-12T08:15:22Z,2026-10-12T08:17:22Z
+S09; ATTACK_CAT=Backdoor; PHASE=linux,,,loop-3x,2026-10-12T08:16:40Z,2026-10-12T08:18:40Z
+S10; ATTACK_CAT=Backdoor; PHASE=any,,,loop-12x,2026-10-12T08:17:57Z,2026-10-12T08:19:57Z
+S11; ATTACK_CAT=DoS; PHASE=any,,,loop-2x,2026-10-12T08:19:13Z,2026-10-12T08:21:13Z
+S12; ATTACK_CAT=Analysis; PHASE=linux,,,loop-6x,2026-10-12T08:20:30Z,2026-10-12T08:22:33Z
+N01,Normal,any,benign,2026-10-12T08:07:27Z,2026-10-12T08:09:29Z
+N01,Normal,any,benign,2026-10-12T08:07:27Z,2026-10-12T08:09:29Z
+== kirim marker + extract-build.sh ke sensor ==
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+== jalankan ekstraksi+pipeline di sensor (bisa beberapa menit) ==
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+[08:26:38] === enp0s8 (input 32M) ===
+/home/sensor/pipeline/extract-build.sh: line 19: 600: command not found
+   [08:26:48] enp0s8:zeek +10s out=4.0K
+/home/sensor/pipeline/extract-build.sh: line 19: 400: command not found
+[08:26:48] enp0s8: argus tak valid/ter-timeout -> dibuang (segmen dilewati)
+[08:26:48] === enp0s9 (input 5.0M) ===
+/home/sensor/pipeline/extract-build.sh: line 19: 600: command not found
+   [08:26:58] enp0s9:zeek +10s out=4.0K
+/home/sensor/pipeline/extract-build.sh: line 19: 400: command not found
+   [08:27:08] enp0s9:argus +10s out=
+[08:27:08] enp0s9: argus tak valid/ter-timeout -> dibuang (segmen dilewati)
+[08:27:08] === enp0s10 (input 41M) ===
+/home/sensor/pipeline/extract-build.sh: line 19: 600: command not found
+   [08:27:18] enp0s10:zeek +10s out=4.0K
+/home/sensor/pipeline/extract-build.sh: line 19: 400: command not found
+   [08:27:28] enp0s10:argus +10s out=
+[08:27:28] enp0s10: argus tak valid/ter-timeout -> dibuang (segmen dilewati)
+[08:27:28] === Tahap A: ra_export ===
+ERROR: tak ada argus-*/*.argus di /home/sensor/extract-test
+[08:27:28] === Tahap B: build_dataset single-view ===
+ERROR: tak ada *_argus49.csv di /home/sensor/extract-test/argus_csv
+[08:27:28] === Tahap B: build_dataset multi-view ===
+ERROR: tak ada *_argus49.csv di /home/sensor/extract-test/argus_csv
+[08:27:28] === SELESAI OUTDIR=/home/sensor/extract-test ===
+== tarik CSV final ke host ==
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+cat: /home/sensor/extract-test/unsw.csv: No such file or directory
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+cat: /home/sensor/extract-test/unsw_multi.csv: No such file or directory
+SELESAI -> /home/Aderelyan/Documents/Project/NIDS/extract-test/unsw.csv (+ unsw_multi.csv)
+0 /home/Aderelyan/Documents/Project/NIDS/extract-test/unsw.csv
+0 /home/Aderelyan/Documents/Project/NIDS/extract-test/unsw_multi.csv
+0 total

@@ -1,0 +1,11 @@
+============================================================
+ S10 | attack_cat=Backdoor | phase=any
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-28T09:02:50Z
+============================================================
+[32m>>> START[0m S10 target=10.10.10.11 @ 2026-10-28T09:02:50Z
+== siapkan 10 file sintetis di share (s10sim_090250) ==
+== fase 'enkripsi': get -> transform lokal -> put .locked -> del asli (burst) ==
+== bersihkan folder simulasi ==
+[32m<<< END[0m   S10 @ 2026-10-28T09:02:52Z  (marker -> /home/kali/attack-markers.csv)
+Selesai (burst 10 file read+write+delete via SMB = sampel S10).

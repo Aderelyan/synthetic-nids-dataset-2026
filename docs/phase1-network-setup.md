@@ -169,14 +169,14 @@ VBoxManage showvminfo "sensor" | findstr /I "promisc"
 
 **Expected state:**
 
-| Check | Expected |
-|---|---|
-| `list vms` | 8 VMs registered: router-opnsense, srv-web, srv-file, client-1, client-2, win-client, attacker, sensor |
-| `list intnets` | `intnet-server`, `intnet-client`, `intnet-attacker` (the generic `intnet` from other VMs can be ignored) |
-| `list natnetworks` | `NatNetwork-temp`, Enabled: Yes |
-| `list hostonlyifs` | IPAddress 192.168.56.1/24, Status Up, DHCP Disabled |
-| router-opnsense NICs | nic1=hostonly, nic2/3/4=intnet |
-| sensor promisc | NIC 1: `Promisc Policy: deny` (mgmt, default) — NIC 2/3/4: `Promisc Policy: allow-all` |
+| Check                | Expected                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| `list vms`           | 8 VMs registered: router-opnsense, srv-web, srv-file, client-1, client-2, win-client, attacker, sensor   |
+| `list intnets`       | `intnet-server`, `intnet-client`, `intnet-attacker` (the generic `intnet` from other VMs can be ignored) |
+| `list natnetworks`   | `NatNetwork-temp`, Enabled: Yes                                                                          |
+| `list hostonlyifs`   | IPAddress 192.168.56.1/24, Status Up, DHCP Disabled                                                      |
+| router-opnsense NICs | nic1=hostonly, nic2/3/4=intnet                                                                           |
+| sensor promisc       | NIC 1: `Promisc Policy: deny` (mgmt, default) — NIC 2/3/4: `Promisc Policy: allow-all`                   |
 
 ## 10. Notes for the Next Phase
 

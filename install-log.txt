@@ -1,0 +1,37 @@
+Kredensial (Enter = default):
+
+
+
+===================== srv-file =====================
+--- percobaan 1 (srv-file) via sudo ---
+Executing: /usr/lib/systemd/systemd-sysv-install enable nmbd
+Synchronizing state of vsftpd.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable vsftpd
+--- status ---
+active
+active
+active
+SETUP-OK-SRVFILE
+>>> srv-file SELESAI: software terpasang, NAT dilepas, golden snapshot baru dibuat.
+===================== srv-web =====================
+--- percobaan 1 (srv-web) via sudo ---
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.10.10' (ED25519) to the list of known hosts.
+[sudo] password for labadmin: dvwa
+--- status ---
+active
+dvwa Up 6 seconds
+SETUP-OK-SRVWEB
+>>> srv-web SELESAI: software terpasang, NAT dilepas, golden snapshot baru dibuat.
+===================== client-1 =====================
+--- percobaan 1 (client-1) via sudo ---
+Setting up libldap2:amd64 (2.6.10+dfsg-1) ...
+Setting up libcurl4t64:amd64 (8.14.1-2+deb13u5) ...
+Setting up curl (8.14.1-2+deb13u5) ...
+Processing triggers for libc-bin (2.41-12+deb13u4) ...
+--- status ---
+/usr/bin/sudo
+/usr/bin/curl
+SETUP-OK-CLIENT
+>>> client-1 SELESAI: software terpasang, NAT dilepas, golden snapshot baru dibuat.
+===================== client-2 =====================

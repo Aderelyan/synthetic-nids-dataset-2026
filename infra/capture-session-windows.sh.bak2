@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# capture-session-windows.sh — orkestrasi 1 SESI CAPTURE FASE WINDOWS dari HOST (git-bash).
+# win-client NYALA, client-1/2 MATI. Normal dijalankan di win-client via VBoxManage
+# guestcontrol (gen-normal.ps1); attack S05/S06/S07 dari attacker via run-1h.sh (SSH, sama
+# spt fase Linux). SUMBER LABEL = ~/capture-windows.csv di attacker (window normal win-client
+# di-APPEND ke sana). Ekstraksi + verifikasi tetap pakai extract-session.sh + check-overlap.py.
+#
+# Jalankan di GIT-BASH:
+#   UJI  (durasi seragam, mis. 120s): bash infra/capture-session-windows.sh 120 15
+#   REAL (DURMAP per-skenario):       bash infra/capture-session-windows.sh
+# arg1 = durasi FLAT seragam (kosong = DURMAP); arg2 = gap antar-window (default 120).
+#
+# PRASYARAT: win-client NYALA (restore golden dulu), client-1/2 MATI, attacker+server+sensor
+# NYALA. Guest Additions aktif di win-client (guestcontrol). s05/s06/s07 + run-1h.sh ter-bake
+# di golden attacker. ISI SENSOR_PW bila beda.
+set -uo pipefail
+export PATH="/c/msys64/usr/bin:/c/Program Files/Oracle/VirtualBox:$PATH"
+export MSYS_NO_PATHCONV=1   # cegah git-bash ubah argumen ber-'/' (mis. /c, /q) jadi path Windows
+
+# ===== kredensial lab (sintetis, lab-only) =====
+SENSOR_PW='sensor'; ROOT_PW='root'; KALI_PW='kali'
+SENSOR=192.168.56.20; ATT=10.10.30.10
+WIN_VM="win-client"; WIN_USER="admin_lab"; WIN_PASS='Admin@2024'
+WIN_DIR='C:\LabData'                         # folder guest (sudah ada, phase4 §6) utk skrip+marker
+# VBoxManage.exe = binary Windows -> butuh path HOST absolut gaya Windows (C:\...), bukan
+# path relatif/MSYS. cygpath -w mengonversi. (Jalankan dari ROOT repo.)
+GEN_PS1_SRC="$(pwd)/scenarios/normal/gen-normal.ps1"
+[ -f "$GEN_PS1_SRC" ] || { echo "STOP: gen-normal.ps1 tak ada di $GEN_PS1_SRC (jalankan dari root repo)."; exit 1; }
+GEN_PS1="$(cygpath -w "$GEN_PS1_SRC" 2>/dev/null || echo "$GEN_PS1_SRC")"
+
+FLAT="${1:-}"; GAP="${2:-120}"; NORMAL_DUR=3600
+# KALIBRASI dari capture BERSIH 2026-10-13 (overlap=0). Target ~2500 flow/kelas, floor 300, cap 3600.
+declare -A DURMAP=(
+  [s05-rdp-bruteforce]=1200          # 2.13 fl/s -> ~2560
+  [s06-winrm-lateral-movement]=3600  # 0.68 fl/s -> cap (~2450)
+  [s07-lsass-dump-pth]=3600          # 0.37 fl/s -> cap (~1330)
+)
+dur_of(){ [ -n "$FLAT" ] && echo "$FLAT" || echo "${DURMAP[$1]:-1800}"; }
+ND=$([ -n "$FLAT" ] && echo "$FLAT" || echo "$NORMAL_DUR")
+
+O="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=12 -o ServerAliveInterval=30 -o ServerAliveCountMax=6"
+PX="sshpass -p $ROOT_PW ssh $O -W %h:%p root@192.168.56.10"
+sens(){ sshpass -p "$SENSOR_PW" ssh $O sensor@$SENSOR "echo '$SENSOR_PW' | sudo -S bash -c '$1'"; }
+sens_plain(){ sshpass -p "$SENSOR_PW" ssh $O sensor@$SENSOR "$1"; }
+att(){  sshpass -p $KALI_PW ssh $O -o ProxyCommand="$PX" kali@$ATT "$1"; }
+# guestcontrol: kredensial DITARUH SETELAH subcommand (sintaks VBox 7). $1=subcommand.
+gc(){ local sub="$1"; shift; VBoxManage guestcontrol "$WIN_VM" "$sub" --username "$WIN_USER" --password "$WIN_PASS" "$@"; }
+vstate(){ VBoxManage showvminfo "$1" --machinereadable 2>/dev/null | grep -q 'VMState="running"'; }
+ts(){ date -u +%Y-%m-%dT%H:%M:%SZ; }
+log(){ echo "[$(ts)] $*"; }
+
+SCNS="s05-rdp-bruteforce s06-winrm-lateral-movement s07-lsass-dump-pth"
+log "=== CAPTURE SESSION FASE WINDOWS ==="
+
+# 0) pre-check fase: win-client NYALA, client-1/2 MATI
+vstate "$WIN_VM" || { echo "STOP: $WIN_VM TIDAK running. Restore golden + startvm dulu."; exit 1; }
+for c in client-1 client-2; do
+  vstate "$c" && { echo "STOP: $c masih NYALA — fase Windows harus MATI (trafik Linux nyelip). Matikan dulu."; exit 1; }
+done
+att "pkill -f run-1h.sh 2>/dev/null; true"
+
+# 1) pcap bersih + start (3 segmen, sama spt fase Linux)
+log "clean+start pcap sensor"
+sens "systemctl stop pcap-capture@enp0s8 pcap-capture@enp0s9 pcap-capture@enp0s10; rm -f /var/log/pcap/enp0s8/* /var/log/pcap/enp0s9/* /var/log/pcap/enp0s10/*; systemctl start pcap-capture@enp0s8 pcap-capture@enp0s9 pcap-capture@enp0s10"
+sleep 3
+log "pcap: $(sens_plain "systemctl is-active pcap-capture@enp0s8 pcap-capture@enp0s9 pcap-capture@enp0s10" | tr '\n' ' ')"
+log "SESSION_START=$(ts)"
+
+# 2) reset marker attacker (sumber label gabungan attack+normal-win)
+att "rm -f ~/capture-windows.csv; true"
+
+# 3) Normal di win-client via guestcontrol: push skrip, bersihkan marker lama, start, validasi, tarik marker.
+log "push gen-normal.ps1 -> $WIN_VM:$WIN_DIR"
+# copyto FILE->DIR (--target-directory) stabil; bentuk file->file sempat hang di versi ini.
+gc copyto "$GEN_PS1" --target-directory "$WIN_DIR\\" || { echo "STOP: guestcontrol copyto gagal (Guest Additions/creds?)."; exit 1; }
+
+# Hapus marker lama SEBELUM menjalankan generator agar file stale tidak dianggap hasil sesi ini.
+log "hapus marker Normal lama di guest"
+gc run --exe "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -- \
+  powershell.exe -NoProfile -Command "Remove-Item -LiteralPath 'C:\\LabData\\normal-markers.csv' -Force -ErrorAction SilentlyContinue; if (Test-Path 'C:\\LabData\\normal-markers.csv') { exit 2 }" \
+  || { echo "STOP: gagal membersihkan marker Normal lama di Windows."; exit 1; }
+
+log "start gen-normal.ps1 ${ND}s (async, user $WIN_USER)"
+gc start --exe "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -- \
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$WIN_DIR\\gen-normal.ps1" -Duration "$ND" -OutDir "$WIN_DIR" \
+   || { echo "STOP: guestcontrol start gen-normal gagal."; exit 1; }
+sleep $((ND + 30))
+
+log "Normal selesai; validasi marker di Windows lalu tarik otomatis ke host"
+tmpd=$(mktemp -d)
+WINMARK="$tmpd/win-normal.csv"
+# Periksa marker dari guest terlebih dahulu. Jika tidak ada/ukuran nol, jangan lanjutkan capture tanpa label Normal.
+gc run --exe "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -- \
+  powershell.exe -NoProfile -Command "if (!(Test-Path 'C:\\LabData\\normal-markers.csv')) { Write-Error 'normal-markers.csv tidak dibuat'; exit 3 }; if ((Get-Item 'C:\\LabData\\normal-markers.csv').Length -le 0) { Write-Error 'normal-markers.csv kosong'; exit 4 }; Get-Content 'C:\\LabData\\normal-markers.csv'" \
+  || { echo "STOP: marker Normal tidak terbentuk di Windows. Periksa gen-normal.ps1 dan Guest Additions."; exit 1; }
+
+# Gunakan helper gc agar opsi --username/--password berada pada posisi yang konsisten.
+if ! timeout 90 VBoxManage guestcontrol "$WIN_VM" copyfrom --username "$WIN_USER" --password "$WIN_PASS" "$WIN_DIR\\normal-markers.csv" "$(cygpath -w "$WINMARK")"; then
+  echo "STOP: gagal mengambil marker Normal dari Windows (guestcontrol copyfrom)."
+  exit 1
+fi
+if [ ! -s "$WINMARK" ] || ! grep -q '^N01,Normal,windows,' "$WINMARK"; then
+  echo "STOP: marker hasil copy tidak berisi baris N01,Normal,windows yang valid."
+  exit 1
+fi
+
+grep -v '^scenario,' "$WINMARK" | tr -d '\r' | att "cat >> ~/capture-windows.csv" \
+  || { echo "STOP: gagal menambahkan marker Normal ke capture-windows.csv di attacker."; exit 1; }
+log "window normal win -> appended: $(grep -vc '^scenario,' "$WINMARK") baris"
+rm -rf "$tmpd"
+log "gap ${GAP}s"; sleep "$GAP"
+
+# 4) tiap skenario Windows (poll BARIS DATA — fix overlap, sama spt fase Linux)
+for s in $SCNS; do
+  base=$(att "cat ~/capture-windows.csv 2>/dev/null | grep -vc '^scenario,'"); base=${base:-0}
+  d=$(dur_of "$s"); log ">>> $s mulai (${d}s)"
+  att "nohup bash ~/scenarios/run-1h.sh $s $d 5 > ~/run-1h.out 2>&1 & echo started"
+  deadline=$(( $(date +%s) + d + 240 ))
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    sleep 60
+    now=$(att "cat ~/capture-windows.csv 2>/dev/null | grep -vc '^scenario,'"); now=${now:-0}
+    [ "$now" -gt "$base" ] && break
+  done
+  log "<<< $s selesai; gap ${GAP}s"; sleep "$GAP"
+done
+
+# 5) stop pcap
+log "stop pcap sensor"
+sens "systemctl stop pcap-capture@enp0s8 pcap-capture@enp0s9 pcap-capture@enp0s10"
+log "SESSION_END=$(ts)"
+
+# 6) ARSIPKAN pcap + marker -> sensor:~/pcap-archive/<TAG> (AMAN lintas-hari; clean sesi berikut
+#    HANYA sentuh /var/log/pcap/<if>/ = working dir). Marker fase Windows = capture-windows.csv
+#    attacker (sudah berisi N01-win + S05/06/07).
+TAG="windows-$(date -u +%Y%m%d-%H%M%S)"
+ARCH="/home/sensor/pcap-archive/$TAG"
+log "arsipkan pcap + marker -> sensor:$ARCH (TAG=$TAG)"
+# arsip PCAP dulu (mv semua file rotasi per-iface)
+sens "mkdir -p '$ARCH'; for i in enp0s8 enp0s9 enp0s10; do mkdir -p '$ARCH/'\$i; mv /var/log/pcap/\$i/*.pcap '$ARCH/'\$i/ 2>/dev/null; done; chown -R sensor:sensor /home/sensor/pcap-archive"
+# marker fase Windows = capture-windows.csv attacker (sudah N01-win + S05/06/07). PIPE LANGSUNG
+# ke arsip sensor TANPA file tmp host (redirect /tmp git-bash kadang gagal).
+{ echo "scenario,attack_cat,phase,target,start_utc,end_utc"
+  att "cat ~/capture-windows.csv" 2>/dev/null | tr -d '\r' \
+  | awk -F',' '/^scenario,/{next} NF<3{next}
+      { if ($1 ~ /ATTACK_CAT=/){ split($1,a,/; */); scn=a[1]; cat=a[2]; sub(/^ATTACK_CAT=/,"",cat); gsub(/"/,"",cat); ph=a[3]; sub(/^PHASE=/,"",ph); print scn","cat","ph","$(NF-2)","$(NF-1)","$NF } else print }'
+} | sens_plain "cat > '$ARCH/markers.csv'"
+log "markers arsip: $(sens_plain "grep -vc '^scenario,' '$ARCH/markers.csv' 2>/dev/null") baris data"
+log "=== SELESAI. ARSIP TAG=$TAG (pcap+markers di sensor:$ARCH). Ekstrak nanti: bash infra/extract-session.sh $TAG ==="
+# CAVEAT:
+# - client-1/2 MATI wajib (fase Windows).
+# - Arsip di ~/pcap-archive AMAN dari clean sesi Linux besok; pantau disk sensor bila banyak arsip.
+# - DURMAP Windows terkalibrasi (lihat atas); utk UJI pakai arg "120 15".

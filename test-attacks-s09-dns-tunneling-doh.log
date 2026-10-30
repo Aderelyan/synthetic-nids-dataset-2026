@@ -1,0 +1,17 @@
+============================================================
+ S09 | attack_cat=Backdoor | phase=linux
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-28T09:02:06Z
+============================================================
+[32m>>> START[0m S09 target=10.10.10.11 @ 2026-10-28T09:02:06Z
+== buka tunnel iodine (direct mode ke server IP) selama 60s ==
+Opened dns0
+Opened IPv4 UDP socket
+Sending DNS queries for tunnel.lab.local to 10.10.10.11
+Autodetecting DNS query type (use -T to override).........   tunnel up (dns0). Membangkitkan trafik lewat tunnel...
+............
+iodine: No suitable DNS query type found. Are you connected to a network?
+iodine: If you expect very long roundtrip delays, use -T explicitly.
+iodine: (Also, connecting to an "ancient" version of iodined won't work.)
+[32m<<< END[0m   S09 @ 2026-10-28T09:02:48Z  (marker -> /home/kali/attack-markers.csv)
+Selesai. (Trafik query DNS bervolume tinggi ke domain tunnel.lab.local = sampel S09.)

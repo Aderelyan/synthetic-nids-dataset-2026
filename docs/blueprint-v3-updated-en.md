@@ -75,12 +75,12 @@ The v2 §4.1 ASCII diagram is **structurally accurate** (4-NIC OPNsense segmenta
 |---|---|
 | router-opnsense | `aff872ec-1a0b-4aab-8b78-fa5c7efd74e4` |
 | srv-web | `ae630ccc-3c9d-4d59-bb13-7fe6f9c8f07b` |
-| srv-file | `b98af237-4a1a-436c-a763-f9681799a371` |
+| srv-file | `8dc66325-fd15-4d5e-a29a-4ed60d590487` |
 | client-1 | `d3cca5ba-f29d-4edb-9d02-d52a5785e958` |
 | client-2 | `fbdd9e8a-b22c-4cb5-8a34-3a958e879da6` |
-| attacker | `423dc313-f5fe-4b10-9f24-42af1ed43fdb` |
+| attacker | `47060ef0-89dd-4113-95d7-fc402cccfd6a` |
 | sensor | `2aade3df-a88e-46d6-96a6-c68b1de619d8` |
-| win-client | `6a291dd9-aa9b-4737-bfcd-5c2ffb7d7935` |
+| win-client | `9c0d4eab-2f3c-43e9-a897-c673a6e67af5` |
 
 The v2 §4.5 reproducibility requirement (pcap hash run1 = run2) can now be built on a consistent baseline across all 8 VMs.
 4. **`GroupShuffleSplit` on `scenario_id`** (v2 §4.4) correctly prevents leakage — keep it, but also add a **time-based** split (train = initial run, test = re-run after snapshot restore) to test the model's generalization to new instances of the same attack at different timings.

@@ -1,0 +1,7 @@
+scenario,attack_cat,phase,target,start_utc,end_utc
+S01,Reconnaissance,any,loop-5x,2026-10-22T06:17:19Z,2026-10-22T06:22:19Z
+S02,Brute Force,any,loop-309x,2026-10-22T06:27:23Z,2026-10-22T07:27:24Z
+S04,Exploits,any,loop-357x,2026-10-22T07:32:57Z,2026-10-22T08:32:57Z
+S08,Backdoor,linux,loop-213x,2026-10-22T08:38:31Z,2026-10-22T09:00:11Z
+N01,Normal,any,benign,2026-10-22T05:11:44Z,2026-10-22T06:11:45Z
+N01,Normal,any,benign,2026-10-22T05:11:45Z,2026-10-22T06:11:52Z

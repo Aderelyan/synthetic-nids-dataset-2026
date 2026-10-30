@@ -9,7 +9,7 @@ ensure_up "$WIN"
 
 mark_start "$WIN"
 echo "== WinRM auth + eksekusi perintah (nxc) =="
-nxc winrm "$WIN" -u "$WIN_USER" -p "$WIN_PASS" -x "whoami; hostname; ipconfig" \
+nxc winrm "$WIN" -u "$WIN_USER" -p "$WIN_PASS" -x "whoami & hostname & ipconfig" \
     | tee "$HERE/s06-winrm.nxc" || true
 settle 4
 # sesi evil-winrm non-interaktif opsional (perintah berurutan via heredoc)

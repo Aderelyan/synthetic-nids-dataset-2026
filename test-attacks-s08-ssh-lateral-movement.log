@@ -1,0 +1,6 @@
+============================================================
+ S08 | attack_cat=Backdoor | phase=linux
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-28T09:02:00Z
+============================================================
+[31mERROR:[0m Target 10.10.20.20 tidak merespons ping. Pastikan PHASE benar & VM target nyala (lihat PHASE=linux di header).

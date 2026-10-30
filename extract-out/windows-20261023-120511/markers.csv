@@ -1,0 +1,5 @@
+scenario,attack_cat,phase,target,start_utc,end_utc
+N01,Normal,windows,benign,2026-10-23T08:35:38Z,2026-10-23T09:35:40Z
+S05,Brute Force,windows,loop-140x,2026-10-23T09:37:45Z,2026-10-23T09:57:46Z
+S06,Backdoor,windows,loop-226x,2026-10-23T09:59:58Z,2026-10-23T10:59:58Z
+S07,Backdoor,windows,loop-245x,2026-10-23T11:02:35Z,2026-10-23T12:02:36Z

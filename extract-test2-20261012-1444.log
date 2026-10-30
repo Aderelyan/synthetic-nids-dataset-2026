@@ -1,0 +1,84 @@
+== kumpulkan marker ==
+infra/extract-session.sh: line 16: /tmp/tmp.mqnvk327BD/aw.csv: No such file or directory
+infra/extract-session.sh: line 17: /tmp/tmp.mqnvk327BD/n1.csv: No such file or directory
+infra/extract-session.sh: line 18: /tmp/tmp.mqnvk327BD/n2.csv: No such file or directory
+infra/extract-session.sh: line 19: /tmp/tmp.mqnvk327BD/markers.csv: No such file or directory
+-- markers gabungan --
+/usr/bin/cat: /tmp/tmp.mqnvk327BD/markers.csv: No such file or directory
+== kirim marker + extract-build.sh ke sensor ==
+/usr/bin/cat: /tmp/tmp.mqnvk327BD/markers.csv: No such file or directory
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+== jalankan ekstraksi+pipeline di sensor (bisa beberapa menit) ==
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+[07:44:58] === enp0s8 (input 92M) ===
+   [07:45:08] enp0s8:zeek +10s out=3.5M
+   [07:45:18] enp0s8:zeek +20s out=5.6M
+   [07:45:28] enp0s8:zeek +30s out=5.9M
+   [07:45:38] enp0s8:zeek +40s out=6.0M
+   [07:45:48] enp0s8:zeek +50s out=6.0M
+   [07:45:58] enp0s8:zeek +60s out=6.3M
+   [07:46:08] enp0s8:zeek +70s out=6.4M
+   [07:46:18] enp0s8:zeek +80s out=6.4M
+   [07:46:28] enp0s8:zeek +90s out=6.4M
+   [07:46:38] enp0s8:zeek +100s out=6.4M
+   [07:46:48] enp0s8:zeek +110s out=6.4M
+   [07:46:58] enp0s8:zeek +120s out=6.5M
+   [07:47:08] enp0s8:zeek +130s out=6.5M
+   [07:47:18] enp0s8:zeek +140s out=6.5M
+   [07:47:28] enp0s8:zeek +150s out=6.6M
+   [07:47:38] enp0s8:zeek +160s out=6.6M
+   [07:47:48] enp0s8:zeek +170s out=6.7M
+   [07:47:58] enp0s8:zeek +180s out=6.7M
+   [07:48:08] enp0s8:zeek +190s out=6.7M
+   [07:48:18] enp0s8:zeek +200s out=6.7M
+   [07:48:28] enp0s8:zeek +210s out=6.7M
+   [07:48:38] enp0s8:zeek +220s out=6.7M
+   [07:48:48] enp0s8:zeek +230s out=6.7M
+   [07:48:58] enp0s8:zeek +240s out=6.7M
+   [07:49:08] enp0s8:zeek +250s out=6.7M
+   [07:49:18] enp0s8:zeek +260s out=6.7M
+   [07:49:28] enp0s8:zeek +270s out=6.7M
+   [07:49:38] enp0s8:zeek +280s out=6.7M
+   [07:49:49] enp0s8:zeek +290s out=6.7M
+   [07:49:59] enp0s8:zeek +300s out=6.7M
+   [07:50:09] enp0s8:zeek +310s out=6.7M
+   [07:50:19] enp0s8:zeek +320s out=6.7M
+   [07:50:29] enp0s8:zeek +330s out=6.7M
+   [07:50:39] enp0s8:zeek +340s out=6.7M
+   [07:50:49] enp0s8:zeek +350s out=6.7M
+   [07:50:59] enp0s8:zeek +360s out=11M
+   [07:51:09] enp0s8:zeek +370s out=15M
+   [07:51:19] enp0s8:zeek +380s out=19M
+   [07:51:29] enp0s8:zeek +390s out=21M
+   [07:51:39] enp0s8:zeek +400s out=22M
+   [07:51:49] enp0s8:zeek +410s out=24M
+   [07:51:59] enp0s8:zeek +420s out=25M
+   [07:52:09] enp0s8:zeek +430s out=26M
+   [07:52:19] enp0s8:zeek +440s out=27M
+   [07:52:29] enp0s8:zeek +450s out=28M
+   [07:52:39] enp0s8:zeek +460s out=29M
+   [07:52:49] enp0s8:zeek +470s out=30M
+   [07:52:59] enp0s8:zeek +480s out=31M
+   [07:53:09] enp0s8:zeek +490s out=35M
+   [07:53:19] enp0s8:zeek +500s out=39M
+   [07:53:29] enp0s8:zeek +510s out=44M
+   [07:53:39] enp0s8:zeek +520s out=49M
+   [07:53:49] enp0s8:zeek +530s out=54M
+   [07:53:59] enp0s8:zeek +540s out=59M
+   [07:54:09] enp0s8:zeek +550s out=65M
+   [07:54:19] enp0s8:zeek +560s out=66M
+   [07:54:29] enp0s8:zeek +570s out=66M
+   [07:54:39] enp0s8:zeek +580s out=66M
+   [07:54:49] enp0s8:zeek +590s out=66M
+   [07:54:59] enp0s8:zeek +600s out=66M
+   [07:54:59] enp0s8:zeek TIMEOUT 600s -> kill
+   [07:55:09] enp0s8:argus +10s out=278M
+[07:55:09] === enp0s9 (input 4.7M) ===
+   [07:55:19] enp0s9:zeek +10s out=748K
+   [07:55:29] enp0s9:argus +10s out=2.9M
+[07:55:32] === enp0s10 (input 265M) ===
+   [07:55:42] enp0s10:zeek +10s out=2.6M
+   [07:55:52] enp0s10:zeek +20s out=15M
+   [07:56:02] enp0s10:zeek +30s out=28M
+   [07:56:12] enp0s10:zeek +40s out=32M

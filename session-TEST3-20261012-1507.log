@@ -1,0 +1,110 @@
+[2026-10-12T08:07:23Z] === CAPTURE SESSION FASE LINUX ===
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.20.20' (ED25519) to the list of known hosts.
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.20.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:07:25Z] clean+start pcap sensor
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+[sudo] password for sensor: Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+[2026-10-12T08:07:29Z] pcap status: active active active 
+[2026-10-12T08:07:29Z] SESSION_START=2026-10-12T08:07:29Z
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.20.20' (ED25519) to the list of known hosts.
+c1 pid 2606
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.20.21' (ED25519) to the list of known hosts.
+c2 pid 2172
+[2026-10-12T08:07:30Z] Normal start 120s; tunggu selesai
+[2026-10-12T08:10:00Z] Normal selesai; gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:10:16Z] >>> s01-port-scanning mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:11:17Z] <<< s01-port-scanning selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:11:32Z] >>> s02-bruteforce-ssh-ftp mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:12:33Z] <<< s02-bruteforce-ssh-ftp selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:12:49Z] >>> s03-password-spraying mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:13:50Z] <<< s03-password-spraying selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:14:05Z] >>> s04-web-injection-sqli mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:15:06Z] <<< s04-web-injection-sqli selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:15:22Z] >>> s08-ssh-lateral-movement mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:16:23Z] <<< s08-ssh-lateral-movement selesai (window tercatat); gap 15s
+[2026-10-12T08:16:38Z] S09: start iodined di srv-file
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.10.11' (ED25519) to the list of known hosts.
+[sudo] password for labadmin: Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:16:40Z] >>> s09-dns-tunneling-doh mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:17:41Z] <<< s09-dns-tunneling-doh selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:17:56Z] >>> s10-ransomware-smb-sim mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:18:57Z] <<< s10-ransomware-smb-sim selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:19:13Z] >>> s11-dos-ddos-hping3 mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:20:14Z] <<< s11-dos-ddos-hping3 selesai (window tercatat); gap 15s
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:20:30Z] >>> s12-data-exfiltration mulai (120s)
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+started
+Warning: Permanently added '192.168.56.10' (ED25519) to the list of known hosts.
+Warning: Permanently added '10.10.30.10' (ED25519) to the list of known hosts.
+[2026-10-12T08:21:31Z] <<< s12-data-exfiltration selesai (window tercatat); gap 15s
+[2026-10-12T08:21:46Z] stop pcap sensor
+Warning: Permanently added '192.168.56.20' (ED25519) to the list of known hosts.
+[sudo] password for sensor: [2026-10-12T08:21:47Z] SESSION_END=2026-10-12T08:21:47Z
+[2026-10-12T08:21:47Z] === SELESAI. Marker: attacker ~/capture-windows.csv + client ~/normal-markers.csv. pcap di sensor /var/log/pcap/ ===

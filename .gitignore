@@ -1,15 +1,46 @@
+# ---------------------------------------------------------------
+# Data mentah & artefak besar: JANGAN pernah masuk repo
+# (pcap bisa >1 GB/run, csv gabungan >500 MB)
+# ---------------------------------------------------------------
 *.pcap
 *.pcapng
+*.argus
+*.zip
 *.vdi
 *.ova
+
+# hasil ekstraksi per-run: hanya markers.csv yang ikut (ground truth kecil)
+extract-out/**
+!extract-out/*/
+!extract-out/*/markers.csv
+
+# arsip pcap per sesi (isinya *.pcap + markers.csv) -> abaikan seluruhnya
+raw-archive/
+raw-pcap01/
+raw-pcap/
+
+# csv gabungan skema UNSW (dataset/*.csv) + varian ml (dataset/ml/*.csv)
+dataset/*.csv
+dataset/ml/*.csv
+dataset/raw/
+dataset/processed/*
+!dataset/processed/.gitkeep
+
+# ---------------------------------------------------------------
+# Artefak kerja lokal
+# ---------------------------------------------------------------
+tmp-debug/
+.vendor/
 venv/
 .venv/
 __pycache__/
 *.py[cod]
-dataset/raw/
+.tmp-win-capture.*/
+
+# ---------------------------------------------------------------
+# Capture turunan & hasil ML
+# ---------------------------------------------------------------
 capture/raw/*
 !capture/raw/.gitkeep
-dataset/processed/*
-!dataset/processed/.gitkeep
 ml/results/*
 !ml/results/.gitkeep

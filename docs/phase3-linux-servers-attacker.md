@@ -93,7 +93,7 @@ ditemukan via `which` — tapi fungsinya tersedia lewat `impacket-secretsdump`
 | Issue | Status | Catatan |
 |---|---|---|
 | NTP inactive, clock belum tersinkronisasi | ✅ **Selesai 2026-10-03** | NTP server lokal dibangun di OPNsense (`phase2-opnsense-setup.md` §11), attacker diarahkan ke gateway `10.10.30.1`. `timedatectl` sekarang: `System clock synchronized: yes`, `NTP service: active`. (Catatan kecil: `/etc/hosts` attacker awalnya belum punya entry `127.0.1.1 attacker`, menyebabkan warning `sudo: unable to resolve host` — sudah ditambal, lihat §3.) |
-| Golden snapshot belum dibuat | ✅ **Selesai 2026-10-05** | `VBoxManage snapshot "attacker" take "golden"` → UUID `423dc313-f5fe-4b10-9f24-42af1ed43fdb`. Diambil bersamaan dengan 6 VM Linux/OPNsense lain + win-client — semua 8 VM lab kini punya golden snapshot (`blueprint-v3-updated.md` §5 poin 3). |
+| Golden snapshot belum dibuat | ✅ **Selesai 2026-10-09** | `VBoxManage snapshot "attacker" take "golden"` → UUID `47060ef0-89dd-4113-95d7-fc402cccfd6a` (diperbarui dengan sshpass + NOPASSWD + ~/scenarios ter-bake). |
 
 ## 7. Final Validation Results
 
@@ -106,7 +106,7 @@ ditemukan via `which` — tapi fungsinya tersedia lewat `impacket-secretsdump`
 | DNS lab resolve | `drill attacker.lab.local` | `10.10.30.10` |
 | Isolasi internet | `ping -c 2 8.8.8.8` | Network is unreachable |
 | Timezone & sync | `timedatectl` | `Etc/UTC`, **synchronized: yes**, NTP service active (gateway `10.10.30.1`, fixed 2026-10-03 — lihat §6) |
-| Golden snapshot | `VBoxManage snapshot "attacker" list` | ✅ `golden` — UUID `423dc313-f5fe-4b10-9f24-42af1ed43fdb` (2026-10-05) |
+| Golden snapshot | `VBoxManage snapshot "attacker" list` | ✅ `golden` — UUID `47060ef0-89dd-4113-95d7-fc402cccfd6a` (2026-10-09) |
 
 ## 8. Notes / Pending
 
