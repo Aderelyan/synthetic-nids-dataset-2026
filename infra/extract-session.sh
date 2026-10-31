@@ -7,6 +7,10 @@
 # Pakai:
 #   bash infra/extract-session.sh              # tampilkan daftar arsip di sensor
 #   bash infra/extract-session.sh <TAG>        # ekstrak arsip <TAG>
+#!/usr/bin/env bash
+# extract-session.sh — EKSTRAKSI dari ARSIP pcap di sensor (dari HOST git-bash).
+# Patch: upload SEMUA pipeline scripts tiap run (bukan cuma extract-build.sh),
+# dan simpan log pipeline ke extract-out/<TAG>/pipeline.log untuk audit.
 set -uo pipefail
 export PATH="/c/msys64/usr/bin:/c/Program Files/Oracle/VirtualBox:$PATH"; export MSYS_NO_PATHCONV=1
 SENSOR_PW=sensor
@@ -26,12 +30,34 @@ OUTDIR_HOST="$(pwd)/extract-out/$TAG"; mkdir -p "$OUTDIR_HOST"
 
 echo "== marker arsip $TAG =="
 SENS "cat '$ARCH/markers.csv'"
-echo "== kirim extract-build.sh + jalankan pipeline atas arsip (bisa beberapa menit) =="
-cat pipeline/extract-build.sh | SENS "cat > ~/pipeline/extract-build.sh; chmod +x ~/pipeline/extract-build.sh"
-SENS "bash ~/pipeline/extract-build.sh '$ARCH/markers.csv' ~/extract-$TAG '$ARCH' 2>&1"
 
-echo "== tarik CSV + markers ke host =="
-# tulis .tmp -> cek jumlah baris sensor vs host -> ganti (anti terpotong & anti file terkunci)
+# ---- upload SEMUA pipeline scripts (anti stale) ----
+echo "== upload pipeline scripts ke sensor =="
+for f in extract-build.sh build_dataset.py ra_export.sh; do
+  if [ ! -f "pipeline/$f" ]; then
+    echo "  WARN: pipeline/$f tak ada di host, skip"
+    continue
+  fi
+  cat "pipeline/$f" | SENS "cat > ~/pipeline/$f; chmod +x ~/pipeline/$f"
+  # verifikasi cepat: checksum host vs sensor
+  h_host=$(md5sum "pipeline/$f" | cut -d' ' -f1)
+  h_sens=$(SENS "md5sum ~/pipeline/$f" | cut -d' ' -f1 | tr -d '\r')
+  if [ "$h_host" = "$h_sens" ]; then
+    echo "  OK pipeline/$f (md5 $h_host)"
+  else
+    echo "  !! MISMATCH pipeline/$f host=$h_host sens=$h_sens -> STOP"
+    exit 1
+  fi
+done
+
+# ---- jalankan pipeline, tee log ke host ----
+echo "== jalankan pipeline atas arsip (bisa beberapa menit) =="
+LOG_HOST="$OUTDIR_HOST/pipeline.log"
+SENS "bash ~/pipeline/extract-build.sh '$ARCH/markers.csv' ~/extract-$TAG '$ARCH' 2>&1" \
+  | tee "$LOG_HOST"
+echo "== log tersimpan di $LOG_HOST =="
+
+# ---- tarik CSV + markers ke host ----
 pull(){ # $1 = path ABSOLUT di sensor, $2 = path lokal
   local nr nl
   if ! SENS "cat '$1'" > "$2.tmp" 2>/dev/null || [ ! -s "$2.tmp" ]; then
