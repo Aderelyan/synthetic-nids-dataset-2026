@@ -95,3 +95,43 @@ UNSW tak pernah dirilis publik → ini reproduksi level-skema, bukan bit-identik
 20.576 flow → 49 kolom. Label: Reconnaissance 20.204, Normal 372. `service` benar
 (scan flow = `-`; dns/ntp/http/ssh terisi), state RST/REQ/INT (khas SYN-scan),
 ct_* ter-cap di 100. Lihat `unsw_s01.csv` (dikirim ke host) sebagai referensi.
+
+
+## Schema mapping: pipeline output vs Kaggle UNSW-NB15
+
+Pipeline menulis kolom sesuai **paper UNSW-NB15 Table II-VII** (49 kolom).
+Kaggle `UNSW_NB15_training-set.csv` memakai nama berbeda untuk beberapa kolom:
+
+| Pipeline (paper) | Kaggle        | Catatan |
+|------------------|---------------|---------|
+| `smeansz`        | `smean`       | |
+| `dmeansz`        | `dmean`       | |
+| `sintpkt`        | `sinpkt`      | |
+| `dintpkt`        | `dinpkt`      | |
+| `res_bdy_len`    | `response_body_len` | |
+| `Sload`          | `sload`       | |
+| `Dload`          | `dload`       | |
+| `Sjit`           | `sjit`        | |
+| `Djit`           | `djit`        | |
+| `Spkts`          | `spkts`       | |
+| `Dpkts`          | `dpkts`       | |
+| (tidak ada)      | `rate`        | Kaggle-specific, bukan di paper |
+| (tidak ada)      | `id`          | Kaggle row index |
+
+Gunakan `standardize_columns()` di `ml/prepare_kaggle_dataset.py` untuk
+menyelaraskan nama sebelum join/compare.
+
+## `ct_*` window = 100 (faithful ke paper)
+
+Paper UNSW-NB15 §IV.F: "features 36-47 … for each **100 connections**
+sequentially ordered". Pipeline memakai sliding window 100 flow terakhir.
+Konsekuensi: nilai `ct_*` **max 100**. Distribusi `ct_*` di LAB berbeda
+dari UNSW **karena karakter capture** (traffic LAB terkonsentrasi di
+beberapa IP), **bukan** bug pipeline.
+
+## Data leakage antar-archive
+
+`ct_*` dihitung **per-archive** (per-run `build_dataset.py`). Saat
+`merge_extract.py` concat CSV, `ct_*` **tidak dihitung ulang secara
+global**. Ini menjelaskan `Stime` delta negatif di batas archive.
+Untuk modelling time-series global, sort ulang atau hitung ulang `ct_*`.

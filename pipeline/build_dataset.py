@@ -46,9 +46,16 @@ UNSW_COLS = [
 # ---------- helpers ----------
 
 def parse_iso(s):
-    """2026-10-08T17:07:54Z -> epoch (UTC)."""
-    return datetime.strptime(s.strip(), "%Y-%m-%dT%H:%M:%SZ").replace(
-        tzinfo=timezone.utc).timestamp()
+    """ISO8601 -> epoch (UTC). Terima: 'Z', '+00:00', fractional sec."""
+    s = s.strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(s).timestamp()
+    except ValueError:
+        # Fallback format lama (tanpa tz)
+        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S").replace(
+            tzinfo=timezone.utc).timestamp()
 
 def safe_float(x, default=0.0):
     """Konversi toleran: None/''/'-'/'NaN' -> default."""
@@ -103,6 +110,23 @@ def ttl_bucket(v):
     if t <= 128: return 2
     if t <= 192: return 3
     return 4
+# Fallback port -> service name (kalau Zeek tidak mengisi conn.log service).
+# Hanya dipakai kalau svc_map lookup miss; tidak override Zeek.
+PORT_SERVICE = {
+    "20": "ftp", "21": "ftp",
+    "22": "ssh", "23": "telnet",
+    "25": "smtp", "465": "smtp", "587": "smtp",
+    "53": "dns",
+    "80": "http", "8000": "http", "8080": "http",
+    "110": "pop3", "143": "imap",
+    "443": "ssl", "8443": "ssl",
+    "445": "smb", "139": "smb",
+    "123": "ntp", "161": "snmp",
+    "3389": "rdp",
+}
+
+def service_fallback(dp):
+    return PORT_SERVICE.get(str(dp), "-")
 
 # ---------- main ----------
 
@@ -128,6 +152,15 @@ def main():
     ap.add_argument("--no-time-scale", action="store_true",
                     help="jangan konversi sinpkt/dinpkt dari us -> ms "
                          "(default: konversi, karena UNSW Sintpkt dalam mSec).")
+    # FIX Q-P0-C: overlap labeling pakai [stime, ltime], bukan hanya stime.
+    # default 0.0 = perilaku sama dengan stime-only utk flow dur>0 (endpoint touch
+    # tetap match); naikkan misal ke 0.1 utk skip edge case flow pendek.
+    ap.add_argument("--min-overlap-sec", type=float, default=0.0,
+                    help="minimal durasi overlap [stime,ltime] dengan window attack "
+                         "agar flow dilabel attack. 0.0 = endpoint-touch juga match.")
+    ap.add_argument("--no-canonicalize", action="store_true",
+                    help="Jangan canonicalize orientasi flow berdasarkan Zeek conn.log. "
+                         "Default: canonicalize (source = connection initiator).")
     ap.add_argument("--verbose", "-v", action="store_true")
     a = ap.parse_args()
 
@@ -147,6 +180,9 @@ def main():
         sys.exit(f"ERROR: tak ada *_argus49.csv di {a.argus_dir}")
     argus_rows.sort(key=lambda r: safe_float(r.get("stime"), 0.0))
     print(f"[B] argus flows (mentah, semua vantage): {len(argus_rows)}")
+    # FIX #5: kalau stime semua 0 -> ra -u gagal / format bukan epoch -> dataset akan rusak diam-diam
+    if not any(safe_float(r.get("stime"), 0) for r in argus_rows):
+        sys.exit("ERROR: kolom 'stime' semua 0 — cek flag ra -u dan format timestamp di ra_export.sh")
 
     # ---- 1b) DEDUP multi-vantage (keputusan 2a: single-view = dataset utama) ----
     # Flow lintas-segmen tercatat >1x (tanpa SNAT, 5-tuple sama di tiap vantage).
@@ -183,7 +219,13 @@ def main():
                 if better:
                     kept[seen[k]] = r
         print(f"[B] dedup=dest: {len(argus_rows)} -> {len(kept)} flow (single-view)")
-        argus_rows = kept
+        # FIX Q-P1-D: dedup bisa mengganti baris lama dengan stime berbeda di posisi
+        # index lama -> urutan kronologis rusak. Sort ulang setelah dedup.
+        argus_rows = sorted(kept, key=lambda r: (
+            safe_float(r.get("stime"), 0.0),
+            safe_float(r.get("ltime"), 0.0),
+            r.get("segment", ""),
+        ))
     else:
         print("[B] dedup=off: multi-view (semua vantage dipertahankan)")
 
@@ -204,6 +246,43 @@ def main():
                 uid5[r["uid"]] = k
     print(f"[B] zeek conn rows: {zeek_conn_total}, "
           f"service keys: {len(svc_map)}, uid map: {len(uid5)}")
+    # ---- 2b) canonical orientation: pakai Zeek orig/resp sebagai acuan ----
+    # Zeek conn.log mencatat id.orig_h = pengirim paket pertama (SYN).
+    # Ini semantik yang sama dengan UNSW: source = connection initiator.
+    canonical_keys = set()
+    for seg in ("enp0s8", "enp0s9", "enp0s10"):
+        _, conn = read_zeek(os.path.join(a.zeek_root, f"zeek-{seg}", "conn.log"))
+        for r in conn:
+            canonical_keys.add(key5(
+                r.get("proto"), r.get("id.orig_h"), r.get("id.orig_p"),
+                r.get("id.resp_h"), r.get("id.resp_p")))
+    print(f"[B] canonical orientation keys (Zeek orig/resp): {len(canonical_keys)}")
+
+    def needs_swap(proto, sa, sp, da, dp):
+        """True jika (sa,sp,da,dp) adalah kebalikan dari flow Zeek.
+        False jika match langsung, atau tidak ada di Zeek (unknown)."""
+        if key5(proto, sa, sp, da, dp) in canonical_keys:
+            return False
+        if key5(proto, da, dp, sa, sp) in canonical_keys:
+            return True
+        return False
+
+    def swap_flow_in_row(r):
+        """Return dict baru dengan semua field directional ditukar."""
+        swaps = [
+            ("saddr", "daddr"), ("sport", "dport"),
+            ("sttl", "dttl"), ("sbytes", "dbytes"),
+            ("sloss", "dloss"), ("Sload", "Dload"),
+            ("Spkts", "Dpkts"), ("swin", "dwin"),
+            ("stcpb", "dtcpb"), ("smeansz", "dmeansz"),
+            ("Sjit", "Djit"), ("Sintpkt", "Dintpkt"),
+            ("synack", "ackdat"),
+        ]
+        out = dict(r)
+        for x, y in swaps:
+            if x in out and y in out:
+                out[x], out[y] = out[y], out[x]
+        return out
 
     # Lookup service dengan fallback bidirectional (Zeek orig/resp bisa flip dari Argus).
     def lookup_service(proto, sa, sp, da, dp):
@@ -215,83 +294,161 @@ def main():
         return svc_map.get(key5(proto, da, dp, sa, sp))
 
     # ---- 3) http.log -> per 5tuple: trans_depth, res_bdy_len, has_method ----
-    http5 = {}
-    http_stats = {"rows": 0, "match_uid": 0, "match_5t": 0, "skip": 0}
+    # DEDUP antar-segmen: koneksi yang sama tertangkap >1 sensor.
+    # uid Zeek beda per instans -> tidak bisa dipakai untuk dedup cross-sensor.
+    # Pakai fingerprint transaksi HTTP: 5-tuple + ts-bucket + method + host + uri + status.
+    def http_dedup_key(r):
+        ts = safe_float(r.get("ts"), 0.0)
+        return (
+            z(r.get("proto")),
+            z(r.get("id.orig_h")), z(r.get("id.orig_p")),
+            z(r.get("id.resp_h")), z(r.get("id.resp_p")),
+            round(ts * 10),  # bucket 0.1 detik
+            z(r.get("method")), z(r.get("host")), z(r.get("uri")),
+            z(r.get("status_code")),
+        )
+
+    http_uniq = {}  # dedup_key -> row (ambil res_bdy_len terbesar jika duplikat)
+    http_stats = {"rows": 0, "uniq": 0}
     for seg in ("enp0s8", "enp0s9", "enp0s10"):
         _, hrows = read_zeek(os.path.join(a.zeek_root, f"zeek-{seg}", "http.log"))
         for r in hrows:
             http_stats["rows"] += 1
-            # Coba uid dulu
-            k = uid5.get(r.get("uid"))
-            if k:
-                http_stats["match_uid"] += 1
-            else:
-                # Fallback: 5-tuple langsung dari http.log (Zeek menulisnya di sini)
-                if r.get("id.orig_h") and r.get("id.resp_h"):
-                    k = key5(r.get("proto"), r.get("id.orig_h"), r.get("id.orig_p"),
-                             r.get("id.resp_h"), r.get("id.resp_p"))
-                    http_stats["match_5t"] += 1
-            if not k:
-                http_stats["skip"] += 1
-                continue
-            td = safe_int(z(r.get("trans_depth")), 0)
-            rb = safe_int(z(r.get("response_body_len")), 0)
-            meth = z(r.get("method"))
-            d = http5.setdefault(k, {"trans_depth": 0, "res_bdy_len": 0, "mthd": 0})
-            d["trans_depth"] = max(d["trans_depth"], td)
-            d["res_bdy_len"] += rb
-            if meth in ("GET", "POST"):
-                d["mthd"] = 1
-    print(f"[B] http.log rows: {http_stats['rows']}, "
-          f"match via uid: {http_stats['match_uid']}, "
-          f"via 5tuple: {http_stats['match_5t']}, "
-          f"skip: {http_stats['skip']}, unique 5tuple: {len(http5)}")
+            dk = http_dedup_key(r)
+            prev = http_uniq.get(dk)
+            if prev is None:
+                http_uniq[dk] = r
+                http_stats["uniq"] += 1
+            elif safe_int(z(r.get("response_body_len")), 0) > \
+                 safe_int(z(prev.get("response_body_len")), 0):
+                http_uniq[dk] = r
+    http5 = {}
+    http_match = {"uid": 0, "5t": 0, "skip": 0}
+    for r in http_uniq.values():
+        k = uid5.get(r.get("uid"))
+        if k:
+            http_match["uid"] += 1
+        elif r.get("id.orig_h") and r.get("id.resp_h"):
+            k = key5(r.get("proto"), r.get("id.orig_h"), r.get("id.orig_p"),
+                     r.get("id.resp_h"), r.get("id.resp_p"))
+            http_match["5t"] += 1
+        if not k:
+            http_match["skip"] += 1
+            continue
+        td = safe_int(z(r.get("trans_depth")), 0)
+        rb = safe_int(z(r.get("response_body_len")), 0)
+        meth = z(r.get("method"))
+        d = http5.setdefault(k, {"trans_depth": 0, "res_bdy_len": 0, "mthd": 0,
+                                 "trans_count": 0})
+        # Zeek trans_depth = pipelining depth, BUKAN jumlah transaksi.
+        # UNSW semantik: jumlah request/response per koneksi.
+        # Kita hitung manual: setiap baris http.log = 1 transaksi.
+        d["trans_count"] += 1
+        d["trans_depth"] = d["trans_count"]   # UNSW-compatible
+        d["res_bdy_len"] += rb
+        if meth in ("GET", "POST"):
+            d["mthd"] += 1
+    print(f"[B] http.log rows: {http_stats['rows']}, uniq cross-sensor: {http_stats['uniq']}, "
+          f"match via uid: {http_match['uid']}, via 5tuple: {http_match['5t']}, "
+          f"skip: {http_match['skip']}, unique 5tuple: {len(http5)}")
     if http_stats["rows"] > 0 and len(http5) == 0:
         print("   WARN: http.log ada baris tapi tak ada match -> cek schema #fields")
 
     # ---- 4) ftp.log -> per 5tuple: is_ftp_login, ct_ftp_cmd ----
-    ftp5 = {}
-    ftp_stats = {"rows": 0, "match_uid": 0, "match_5t": 0, "skip": 0}
+    def ftp_dedup_key(r):
+        ts = safe_float(r.get("ts"), 0.0)
+        return (
+            z(r.get("proto")),
+            z(r.get("id.orig_h")), z(r.get("id.orig_p")),
+            z(r.get("id.resp_h")), z(r.get("id.resp_p")),
+            round(ts * 10),
+            z(r.get("command")), z(r.get("arg")), z(r.get("reply_code")),
+        )
+
+    ftp_uniq = {}
+    ftp_stats = {"rows": 0, "uniq": 0}
     for seg in ("enp0s8", "enp0s9", "enp0s10"):
         _, frows = read_zeek(os.path.join(a.zeek_root, f"zeek-{seg}", "ftp.log"))
         for r in frows:
             ftp_stats["rows"] += 1
-            k = uid5.get(r.get("uid"))
-            if k:
-                ftp_stats["match_uid"] += 1
-            else:
-                if r.get("id.orig_h") and r.get("id.resp_h"):
-                    k = key5(r.get("proto"), r.get("id.orig_h"), r.get("id.orig_p"),
-                             r.get("id.resp_h"), r.get("id.resp_p"))
-                    ftp_stats["match_5t"] += 1
-            if not k:
-                ftp_stats["skip"] += 1
-                continue
-            d = ftp5.setdefault(k, {"login": 0, "cmd": 0})
-            if z(r.get("command")):
-                d["cmd"] += 1
-            rc = z(r.get("reply_code"))
-            user = z(r.get("user"))
-            if (rc and str(rc).startswith("230")) or \
-               (user and user not in ("anonymous",)):
-                d["login"] = 1
-    print(f"[B] ftp.log rows: {ftp_stats['rows']}, "
-          f"match via uid: {ftp_stats['match_uid']}, "
-          f"via 5tuple: {ftp_stats['match_5t']}, "
-          f"skip: {ftp_stats['skip']}, unique 5tuple: {len(ftp5)}")
+            dk = ftp_dedup_key(r)
+            if dk not in ftp_uniq:
+                ftp_uniq[dk] = r
+                ftp_stats["uniq"] += 1
+    ftp5 = {}
+    ftp_match = {"uid": 0, "5t": 0, "skip": 0}
+    for r in ftp_uniq.values():
+        k = uid5.get(r.get("uid"))
+        if k:
+            ftp_match["uid"] += 1
+        elif r.get("id.orig_h") and r.get("id.resp_h"):
+            k = key5(r.get("proto"), r.get("id.orig_h"), r.get("id.orig_p"),
+                     r.get("id.resp_h"), r.get("id.resp_p"))
+            ftp_match["5t"] += 1
+        if not k:
+            ftp_match["skip"] += 1
+            continue
+        d = ftp5.setdefault(k, {"login": 0, "cmd": 0})
+        if z(r.get("command")):
+            d["cmd"] += 1
+        # FIX #2: is_ftp_login = HANYA reply code 230 (login berhasil)
+        rc = z(r.get("reply_code"))
+        if rc and str(rc) == "230":
+            d["login"] = 1
+    print(f"[B] ftp.log rows: {ftp_stats['rows']}, uniq cross-sensor: {ftp_stats['uniq']}, "
+          f"match via uid: {ftp_match['uid']}, via 5tuple: {ftp_match['5t']}, "
+          f"skip: {ftp_match['skip']}, unique 5tuple: {len(ftp5)}")
 
     # ---- 5) marker windows ----
     wins = []
     with open(a.markers) as f:
         for r in csv.DictReader(f):
-            wins.append((parse_iso(r["start_utc"]), parse_iso(r["end_utc"]),
-                         r["attack_cat"].strip()))
+            wins.append((
+                parse_iso(r["start_utc"]),
+                parse_iso(r["end_utc"]),
+                r["attack_cat"].strip(),
+                (r.get("phase") or "").strip().lower(),
+                (r.get("target") or "").strip(),
+            ))
+
+    # FIX Q-P2-H: warning kalau marker overlap (labeling single-label = first-match)
+    sorted_w = sorted(wins, key=lambda x: x[0])
+    for i in range(1, len(sorted_w)):
+        prev_s, prev_e, prev_cat = sorted_w[i-1][:3]
+        cur_s, cur_e, cur_cat = sorted_w[i][:3]
+        if cur_s < prev_e:
+            print(f"[B] WARN marker overlap: '{prev_cat}' (end {prev_e:.0f}) "
+                  f"tumpang tindih dengan '{cur_cat}' (start {cur_s:.0f}), "
+                  f"overlap {prev_e - cur_s:.1f}s -> first-match wins")
     atk = a.attacker_ip.strip()
 
-    def label_of(sa, da, st):
-        for s, e, cat in wins:
-            if s <= st <= e and (not atk or sa == atk or da == atk):
-                return cat, 1
+    SKIP_PHASES = {"normal", "baseline", "setup", "idle", "warmup"}
+
+    def label_of(sa, da, st, lt):
+        if lt < st:
+            lt = st  # sanity: ltime tidak boleh < stime
+
+        for s, e, cat, phase, target in wins:
+            # Skip window baseline/non-attack
+            if cat.strip().lower() == "normal":
+                continue
+            if phase and phase in SKIP_PHASES:
+                continue
+
+            # Filter IP: prioritaskan attacker_ip; fallback ke target dari marker
+            if atk:
+                if sa != atk and da != atk:
+                    continue
+            elif target:
+                if sa != target and da != target:
+                    continue
+
+            # Overlap interval [st,lt] dengan [s,e]
+            ov = min(e, lt) - max(s, st)
+            if ov < a.min_overlap_sec:
+                continue
+
+            return cat, 1
         return "Normal", 0
 
     # ---- 5b) auto-detect Argus sload unit ----
@@ -319,8 +476,10 @@ def main():
                 sload_factor = 1.0
                 detected = "bits/s"
             else:
-                sload_factor = 8.0
-                detected = f"unknown (ratio {median_ratio:.2f}), assume bytes/s"
+                # FIX #7: JANGAN diam-diam default ke bytes/s — bisa korupsi data.
+                sys.exit(f"ERROR: sload auto-detect gagal (median sload*dur/sbytes="
+                         f"{median_ratio:.3f}). Override eksplisit: "
+                         f"--sload-unit bits|bytes")
             print(f"[B] sload auto-detect: {detected} -> factor={sload_factor} "
                   f"(median sload*dur/sbytes={median_ratio:.3f})")
         else:
@@ -333,9 +492,32 @@ def main():
         sload_factor = 1.0
         print("[B] sload unit: bits/s (no change)")
 
-    time_factor = 1.0 if a.no_time_scale else 0.001  # us -> ms
-    print(f"[B] sinpkt/dinpkt scale: x{time_factor} "
-          f"({'raw' if a.no_time_scale else 'us->ms'})")
+    # FIX #6: auto-detect unit sintpkt/dinpkt (μs vs ms) — fragil di banyak versi Argus.
+    # Heuristik: median sintpkt > 10 → μs (perlu /1000); ≤ 10 → ms (sudah benar).
+    if a.no_time_scale:
+        time_factor = 1.0
+        time_detected = "raw (--no-time-scale)"
+    else:
+        sip = []
+        for r in argus_rows:
+            d = safe_float(r.get("dur"), 0)
+            sp = safe_int(r.get("spkts"), 0)
+            v = safe_float(r.get("sintpkt"), 0)
+            if d > 0.001 and sp > 1 and v > 0 and len(sip) < 200:
+                sip.append(v)
+        if sip:
+            sip.sort()
+            med = sip[len(sip) // 2]
+            if med > 10:
+                time_factor = 0.001
+                time_detected = f"us->ms (median sintpkt={med:.2f})"
+            else:
+                time_factor = 1.0
+                time_detected = f"ms (median sintpkt={med:.2f})"
+        else:
+            time_factor = 0.001
+            time_detected = "default us->ms (tak cukup sample)"
+    print(f"[B] sinpkt/dinpkt scale: x{time_factor} ({time_detected})")
 
     # ---- 6) sliding-window counters (last N, kronologis) ----
     N = a.window
@@ -359,6 +541,7 @@ def main():
     out_rows = []
     nlab = Counter()
     svc_miss = 0
+    n_swapped = 0
     for r in argus_rows:
         sa = r.get("saddr", "")
         da = r.get("daddr", "")
@@ -367,11 +550,22 @@ def main():
         proto = (r.get("proto") or "").lower()
         st = safe_float(r.get("stime"), 0.0)
 
+        # Canonicalize orientation (source = Zeek orig = connection initiator)
+        if not a.no_canonicalize and needs_swap(proto, sa, sp, da, dp):
+            r = swap_flow_in_row(r)
+            sa = r["saddr"]; da = r["daddr"]
+            sp = r["sport"]; dp = r["dport"]
+            n_swapped += 1
+
         # Service lookup: bidirectional
         svc = lookup_service(proto, sa, sp, da, dp)
         if svc is None:
-            svc = "-"
-            svc_miss += 1
+            svc_fb = service_fallback(dp)
+            if svc_fb != "-":
+                svc = svc_fb
+            else:
+                svc = "-"
+                svc_miss += 1
 
         # ct_state_ttl key: PERBAIKAN — TTL di-bucket supaya kardinalitas kecil
         key_st = (r.get("state", ""), ttl_bucket(r.get("sttl")),
@@ -404,7 +598,8 @@ def main():
         h = http5.get(k_fwd) or http5.get(k_rev) or {}
         ftp = ftp5.get(k_fwd) or ftp5.get(k_rev) or {}
 
-        cat, lab = label_of(sa, da, st)
+        lt = safe_float(r.get("ltime"), st)
+        cat, lab = label_of(sa, da, st, lt)
         nlab[cat] += 1
 
         # Numeric field dengan konversi unit
@@ -472,6 +667,15 @@ def main():
         w.writerows(out_rows)
     print(f"[B] tulis {len(out_rows)} baris, {len(cols)} kolom -> {a.out}")
     print(f"[B] label: {dict(nlab)}")
+    print(f"[B] canonicalize: {n_swapped}/{len(out_rows)} flow di-swap "
+          f"({100*n_swapped/max(1,len(out_rows)):.1f}%)")
+        # Ringkasan label per attack_cat (untuk audit overlap labeling)
+    from collections import defaultdict
+    cat_counts = defaultdict(lambda: [0, 0])
+    for r in out_rows:
+        cat_counts[r["attack_cat"]][r["label"]] += 1
+    print("[B] per-category: " + "  ".join(
+        f"{c}(l0={v[0]},l1={v[1]})" for c, v in sorted(cat_counts.items())))
     if svc_miss:
         print(f"[B] service miss: {svc_miss} flow -> '-' "
               f"({100*svc_miss/max(1,len(out_rows)):.1f}%)")

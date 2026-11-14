@@ -33,7 +33,7 @@ SENS "cat '$ARCH/markers.csv'"
 
 # ---- upload SEMUA pipeline scripts (anti stale) ----
 echo "== upload pipeline scripts ke sensor =="
-for f in extract-build.sh build_dataset.py ra_export.sh; do
+for f in extract-build.sh build_dataset.py ra_export.sh qa_dataset.py; do
   if [ ! -f "pipeline/$f" ]; then
     echo "  WARN: pipeline/$f tak ada di host, skip"
     continue
@@ -51,10 +51,22 @@ for f in extract-build.sh build_dataset.py ra_export.sh; do
 done
 
 # ---- jalankan pipeline, tee log ke host ----
+# FIX Q-P0-E: attacker IP & max timeout bisa beda per arsip -> jangan hardcode di sensor
+ATTACKER_IP="${ATTACKER_IP:-10.10.30.10}"
+MAX_TIMEOUT="${MAX_TIMEOUT:-7200}"
+echo "== attacker-ip: $ATTACKER_IP, max-timeout: ${MAX_TIMEOUT}s =="
+
 echo "== jalankan pipeline atas arsip (bisa beberapa menit) =="
 LOG_HOST="$OUTDIR_HOST/pipeline.log"
-SENS "bash ~/pipeline/extract-build.sh '$ARCH/markers.csv' ~/extract-$TAG '$ARCH' 2>&1" \
+SENS "ATTACKER_IP='$ATTACKER_IP' MAX_TIMEOUT='$MAX_TIMEOUT' \
+      bash ~/pipeline/extract-build.sh '$ARCH/markers.csv' ~/extract-$TAG '$ARCH' 2>&1" \
   | tee "$LOG_HOST"
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+    # FIX Q-P0-F: jangan lanjut pull CSV kalau pipeline remote gagal
+    echo "FATAL: pipeline remote exit $status (lihat $LOG_HOST) — berhenti."
+    exit 1
+fi
 echo "== log tersimpan di $LOG_HOST =="
 
 # ---- tarik CSV + markers ke host ----
@@ -71,5 +83,16 @@ ok=1
 pull "$ARCH/markers.csv"                         "$OUTDIR_HOST/markers.csv"    || ok=0
 pull "/home/sensor/extract-$TAG/unsw.csv"        "$OUTDIR_HOST/unsw.csv"       || ok=0
 pull "/home/sensor/extract-$TAG/unsw_multi.csv"  "$OUTDIR_HOST/unsw_multi.csv" || ok=0
-[ "$ok" = 1 ] && echo "SELESAI -> $OUTDIR_HOST/ ; verifikasi: python infra/check-overlap.py extract-out/$TAG" \
-             || echo "SELESAI SEBAGIAN — perbaiki yg gagal lalu ulang: bash infra/extract-session.sh $TAG"
+if [ "$ok" = 1 ]; then
+    echo "SELESAI -> $OUTDIR_HOST/"
+    # FIX Q-P2-D: jalankan check-overlap.py hanya kalau file-nya ada
+    if [ -f "infra/check-overlap.py" ]; then
+        echo "== verifikasi overlap =="
+        python3 infra/check-overlap.py "extract-out/$TAG" || \
+            echo "  WARN: check-overlap.py gagal (non-fatal)"
+    else
+        echo "  (infra/check-overlap.py tidak ada, skip verifikasi)"
+    fi
+else
+    echo "SELESAI SEBAGIAN — perbaiki yg gagal lalu ulang: bash infra/extract-session.sh $TAG"
+fi

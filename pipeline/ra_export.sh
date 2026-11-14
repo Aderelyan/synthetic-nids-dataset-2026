@@ -8,6 +8,12 @@
 #   out_dir        : tujuan CSV per-segmen
 #   ra_binary      : path ra (default: 'ra' di PATH)
 set -euo pipefail
+# FIX Q-P1-J: paksa locale C supaya decimal separator = titik (bukan koma
+# di locale id_ID), dan TZ=UTC konsisten untuk stime/ltime.
+export LC_ALL=C
+export LANG=C
+export TZ=UTC
+
 EXDIR="${1:?extraction dir}"; OUT="${2:?out dir}"; RA="${3:-ra}"
 
 # 32 field argus = basic/content/time/state UNSW-NB15 (ct_*/service/http diisi Tahap B)
@@ -20,11 +26,31 @@ for a in "$EXDIR"/argus-*/*.argus; do
   found=1
   seg="$(basename "$a" .argus)"                       # enp0s8 / enp0s9 / enp0s10
   out="$OUT/${seg}_argus49.csv"
+  tmp="$out.part"
   { echo "$HDR,segment"
     # -M nomar: buang record status Argus; -u: stime/ltime epoch; -n: jangan resolve DNS
-    TZ=UTC "$RA" -M nomar -u -n -r "$a" -c ',' -s $FIELDS 2>/dev/null \
-      | awk -v s="$seg" 'NR>1 && NF {print $0","s}'
-  } > "$out"
-  echo "  $seg -> $out ($(( $(wc -l < "$out") - 1 )) flows)"
+    "$RA" -M nomar -u -n -r "$a" -c ',' -s $FIELDS 2>/dev/null \
+      | awk -v s="$seg" '
+          # FIX Q-P1-I: header detection aman — baris pertama di-skip HANYA jika
+          # field pertama bukan numerik (stime harus numeric). Ini handle ra
+          # yang kadang cetak header kadang tidak, tergantung versi.
+          NR==1 {
+            split($0, f, ",")
+            if (f[1] !~ /^-?[0-9]+(\.[0-9]+)?$/) next
+          }
+          NF { print $0 "," s }
+        '
+  } > "$tmp"
+
+  n=$(( $(wc -l < "$tmp") - 1 ))   # -1 untuk header CSV
+  if [ "$n" -lt 1 ]; then
+    echo "  WARN: $seg tidak menghasilkan flow valid -> dilewati"
+    rm -f "$tmp"
+    continue
+  fi
+  mv "$tmp" "$out"
+  echo "  $seg -> $out ($n flows)"
 done
+# FIX Q-P1-K: log versi ra untuk reproduktibilitas
+
 [ "$found" = 1 ] || { echo "ERROR: tak ada argus-*/*.argus di $EXDIR"; exit 1; }

@@ -58,7 +58,7 @@ merge_iface(){ local i="$1" dest="$2"; local -a f=()
   if [ -f "$PCAP/$i.pcap" ]; then f=("$PCAP/$i.pcap")
   else f=( "$PCAP/$i/"*.pcap ); [ ${#f[@]} -eq 0 ] && f=( "$PCAP/$i"*.pcap ); fi
   [ ${#f[@]} -eq 0 ] && return 1
-  IFS=$'\n' f=($(printf '%s\n' "${f[@]}" | sort -n)); unset IFS
+  IFS=$'\n' f=($(printf '%s\n' "${f[@]}" | sort -V)); unset IFS
 
   if [ -n "$MERGECAP" ]; then
     if "$MERGECAP" -w "$dest" "${f[@]}" 2>"$OUT/.mergecap-$i.err"; then
@@ -84,7 +84,7 @@ merge_iface(){ local i="$1" dest="$2"; local -a f=()
 # runp <label> <watch-path> -- <cmd...> : jalan di bg, progress tiap 10s,
 # watchdog kill jika > MAX_TIMEOUT (0 = tak terbatas).
 runp(){ local label="$1" watch="$2"; shift 2; [ "${1:-}" = "--" ] && shift
-  "$@" & local pid=$! t=0
+  "$@" & local pid=$! t=0 killed=0
   while kill -0 "$pid" 2>/dev/null; do
     sleep 10; t=$((t+10))
     if [ "$MAX_TIMEOUT" -gt 0 ] && [ "$t" -ge "$MAX_TIMEOUT" ]; then
@@ -92,11 +92,15 @@ runp(){ local label="$1" watch="$2"; shift 2; [ "${1:-}" = "--" ] && shift
       kill -TERM "$pid" 2>/dev/null || true
       sleep 3
       kill -KILL "$pid" 2>/dev/null || true
+      killed=1
       break
     fi
     echo "   [$(now)] $label +${t}s out=$(du -sh "$watch" 2>/dev/null | cut -f1)"
   done
-  wait "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null
+  local rc=$?
+  [ "$killed" -eq 1 ] && return 124   # 124 = timeout, konvensi coreutils
+  return $rc
 }
 
 # report_zeek_logs <iface> : cetak jumlah baris per log penting
@@ -125,20 +129,39 @@ for i in enp0s8 enp0s9 enp0s10; do
   mkdir -p "$OUT/zeek-$i" "$OUT/argus-$i"
 
   # Zeek: -C = ignore checksum, 'local' = site/local.zeek (muat protokol standar)
-  runp "$i:zeek"  "$OUT/zeek-$i" \
-    -- bash -c "cd '$OUT/zeek-$i' && '$ZEEK' -C -r '$OUT/$i.pcap' local 2>'$OUT/zeek-$i/.stderr'"
+  # --- Zeek (fail-fast) ---
+  if ! runp "$i:zeek"  "$OUT/zeek-$i" \
+       -- bash -c "cd '$OUT/zeek-$i' && '$ZEEK' -C -r '$OUT/$i.pcap' local 2>'$OUT/zeek-$i/.stderr'"; then
+    log "ERROR: $i zeek gagal/timeout -> segmen dilewati"
+    continue
+  fi
 
   report_zeek_logs "$i"
 
-  runp "$i:argus" "$OUT/argus-$i/$i.argus" \
-    -- "$ARGUS" -r "$OUT/$i.pcap" -w "$OUT/argus-$i/$i.argus" -P 0
+  # FIX Q-P1-M: conn.log kosong = fatal (service lookup akan hancur)
+  conn_rows=$(awk '!/^#/ && NF>0' "$OUT/zeek-$i/conn.log" 2>/dev/null | wc -l)
+  if [ "$conn_rows" -lt 1 ]; then
+    log "ERROR: $i conn.log kosong -> segmen dilewati"
+    continue
+  fi
+  log "   $i: conn.log = $conn_rows rows OK"
 
-  if ! timeout 20 "$RA" -r "$OUT/argus-$i/$i.argus" -c , -s stime 2>/dev/null \
-       | head -1 | grep -q .; then
-    log "$i: argus tak menghasilkan flow valid -> dilewati"
+  # --- Argus (fail-fast) ---
+  if ! runp "$i:argus" "$OUT/argus-$i/$i.argus" \
+       -- "$ARGUS" -r "$OUT/$i.pcap" -w "$OUT/argus-$i/$i.argus" -P 0; then
+    log "ERROR: $i argus gagal/timeout -> segmen dilewati"
+    continue
+  fi
+
+  # FIX Q-P1-N: cek jumlah baris (bukan head -1 | grep -q, yang bisa false-positive
+  # jika ra mencetak error message ke stdout)
+  n_argus=$(timeout 20 "$RA" -r "$OUT/argus-$i/$i.argus" -c , -s stime 2>/dev/null | wc -l)
+  if [ "$n_argus" -lt 2 ]; then
+    log "$i: argus tak menghasilkan flow valid ($n_argus baris) -> dilewati"
     rm -f "$OUT/argus-$i/$i.argus"
     continue
   fi
+  log "   $i: argus = $((n_argus-1)) flows OK"
   SEG_OK+=("$i")
 done
 
@@ -157,7 +180,7 @@ fi
 
 # ---------- Tahap B (single-view, dataset utama) ----------
 log "=== Tahap B: build_dataset single-view ==="
-if ! python3 ~/pipeline/build_dataset.py \
+if ! PYTHONUNBUFFERED=1 python3 ~/pipeline/build_dataset.py \
     --argus-dir "$OUT/argus_csv" \
     --zeek-root "$OUT" \
     --markers "$MARK" \
@@ -169,7 +192,7 @@ fi
 
 # ---------- Tahap B (multi-view, varian) ----------
 log "=== Tahap B: build_dataset multi-view ==="
-if ! python3 ~/pipeline/build_dataset.py \
+if ! PYTHONUNBUFFERED=1 python3 ~/pipeline/build_dataset.py \
     --argus-dir "$OUT/argus_csv" \
     --zeek-root "$OUT" \
     --markers "$MARK" \
@@ -179,10 +202,17 @@ if ! python3 ~/pipeline/build_dataset.py \
   log "WARN: build_dataset multi-view gagal (single-view tetap ada)"
 fi
 
+
 # ---------- sanity check output ----------
 for f in "$OUT/unsw.csv" "$OUT/unsw_multi.csv"; do
   if [ -f "$f" ]; then
     log "OUT: $f ($(( $(wc -l < "$f") - 1 )) data rows, $(du -h "$f" | cut -f1))"
+    # FIX Q-P1-F: QC post-build
+    if [ -f ~/pipeline/qa_dataset.py ]; then
+      log "== QA $f =="
+      PYTHONUNBUFFERED=1 python3 ~/pipeline/qa_dataset.py "$f" || \
+        log "  WARN: QA mengembalikan exit $? (cek output di atas)"
+    fi
   fi
 done
 
