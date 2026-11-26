@@ -1,9 +1,0 @@
-============================================================
- S11 | attack_cat=DoS | phase=any
- LAB ONLY — jaringan terisolasi, target milik sendiri.
- Waktu mulai (UTC): 2026-10-28T09:02:54Z
-============================================================
-SYN flood terkontrol -> 10.10.10.10:80 10s; 400 sport (base 40000), burst 200 @~3300pps, src TETAP attacker.
-[32m>>> START[0m S11 target=10.10.10.10:80 @ 2026-10-28T09:02:54Z
-[32m<<< END[0m   S11 @ 2026-10-28T09:03:04Z  (marker -> /home/kali/attack-markers.csv)
-Selesai (DoS sample: 400 koneksi bervolume, src IP attacker konstan).
